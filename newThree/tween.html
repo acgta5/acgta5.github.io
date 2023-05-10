@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body{
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="three"></div>
+    <script type="module">
+        import * as THREE from './js/three.module.js'
+        import {OrbitControls} from './js/OrbitControls.js'
+        let scene,camera,renderer,controls,imgLoader = new THREE.TextureLoader(),object3D = new THREE.Object3D(),ball,shadow
+        function init() {
+            scene = new THREE.Scene()
+            camera = new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight)
+            camera.position.set(0,20,10)
+            camera.lookAt(0,0,0)
+            renderer = new THREE.WebGLRenderer({antialias:true})
+            renderer.setSize(window.innerWidth,window.innerHeight - 5)
+            renderer.setClearColor(0xffffff)
+            document.getElementById('three').appendChild(renderer.domElement)
+            controls = new OrbitControls(camera,renderer.domElement)
+            let baseLight = new THREE.AmbientLight(0x404040)
+            let direcLight = new THREE.DirectionalLight(0xffffff)
+            direcLight.position.set(0,10,0)
+            // scene.add(baseLight)
+            scene.add(direcLight)
+        }
+        function main() {
+            
+            let texture = imgLoader.load('./img/checker.png')
+            texture.wrapS = THREE.RepeatWrapping
+            texture.wrapT = THREE.RepeatWrapping
+            texture.magFilter = THREE.NearestFilter
+            texture.repeat.set(20,20)
+            let ground = new THREE.Mesh(
+                new THREE.PlaneGeometry(40,40),
+                new THREE.MeshBasicMaterial({
+                    map:texture,
+                    side:THREE.DoubleSide,
+                    color: new THREE.Color(1.5,1.5,1.5)
+                })
+            )
+            // ground.position.y = 0.001
+            ground.rotation.x = -Math.PI / 2
+            let shadowTexture = imgLoader.load('./img/roundshadow.png')
+            ball = new THREE.Mesh(
+                new THREE.SphereGeometry(1,32,16),
+                new THREE.MeshPhongMaterial({
+                    color:new THREE.Color('hsl(100,100%,75%)')
+                })
+            )
+            ball.position.set(0,3,0)
+            shadow = new THREE.Mesh(
+                new THREE.PlaneGeometry(1,1),
+                new THREE.MeshBasicMaterial({
+                    map: shadowTexture,
+                    transparent:true,
+                    depthWrite:false
+                })
+            )
+            shadow.position.y = 0.001
+            shadow.scale.set(4,4,4)
+            shadow.rotation.x = -Math.PI/ 2
+            object3D.add(ball)
+            object3D.add(shadow)
+            scene.add(object3D)
+            scene.add(ground)
+            renderer.render(scene,camera)
+        }
+        function animate(time) {
+            time *= 0.001
+            object3D.position.set(Math.cos(time) * 2,0,Math.sin(time) * 2)
+            let yoff = Math.abs(Math.sin(time * 2 + 1))
+            ball.position.y = 3 + THREE.Math.lerp(-2,2,yoff)
+            shadow.material.opacity = THREE.Math.lerp(1,0.25,yoff)
+            requestAnimationFrame(animate)
+            controls.update()
+            renderer.render(scene,camera)
+        }
+        init()
+        main()
+        requestAnimationFrame(animate)
+    </script>
+</body>
+</html>

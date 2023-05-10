@@ -1,22 +1,220 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Document</title>
-  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
-  <meta name="description" content="Description">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
-  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>练习</title>
 </head>
-<body>
-  <div id="app"></div>
-  <script>
-    window.$docsify = {
-      name: '',
-      repo: ''
+<style>
+    body{
+        margin: 0px;
+        padding: 0px;
     }
-  </script>
-  <!-- Docsify v4 -->
-  <script src="//cdn.jsdelivr.net/npm/docsify@4"></script>
+    .loadingBox{
+        position: fixed;
+        z-index: 99;
+        left: 0;
+        top: 0;
+        right: 0;
+        bottom: 0;
+    }
+    .loadingText{
+        position: absolute;
+        width: 200px;
+        height: 36px;
+        line-height: 36px;
+        color: #000000;
+        font-weight: bold;
+        font-size: 20px;
+        left: 50%;
+        top: 50%;
+        transform: translate(-100px,-18px);
+    }
+
+</style>
+<!-- <script src="http://img.acgta5.top/three.min.js"></script>
+<script src="http://img.acgta5.top/OrbitControls.js"></script>
+<script src="http://img.acgta5.top/stats.min.js"></script>
+<script src="http://img.acgta5.top/GLTFLoader.js"></script> -->
+<script src="./js/three.min.js"></script>
+<script src="./js/OrbitControls.js"></script>
+<script src="./js/stats.min.js"></script>
+<script src="./js/GLTFLoader.js"></script>
+<body>
+    <div id="loadingBox" class="loadingBox">
+        <img src="./img/bg2.jpg" alt="" srcset="">
+        <div id="loadingText" class="loadingText"></div>
+    </div>
+    <div style="position: fixed;top: 0px;left: 50%;transform: translateX(-50%);">
+        <a href="./test/切换视角.html">切换视角</a>
+        <a href="./test/射线选择.html">射线选择</a>
+        <a href="./test/旋转吧.html">旋转吧</a>
+        <a href="./test/选中物体并接近.html">选中物体靠近</a>
+        <a href="./index.html">返回</a>
+    </div>
+    <div id="three"></div>
+    <video id="video" src="./img/demo.mp4" autoplay loop controls muted style="display:none"></video>
 </body>
+<script>
+    window.onload = function() {
+        var scene,camera, renderer,controls, stats
+        var loading = true
+        var isRotate = true
+        var isShow = true
+        var showFlag = false
+        var showNum = 0
+        scene = new THREE.Scene()
+        camera = new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight)
+        camera.position.set(0,10,200)
+        renderer = new THREE.WebGLRenderer({antialias:true})
+        renderer.setSize(window.innerWidth,window.innerHeight)
+        renderer.setClearColor(0xffffff)
+        stats = new Stats()
+        document.getElementById('three').appendChild(stats.dom)
+        document.getElementById('three').appendChild(renderer.domElement)
+        controls = new THREE.OrbitControls(camera,renderer.domElement)
+        const axesHelper = new THREE.AxesHelper( 100 );
+        // scene.add( axesHelper );
+        var directionalLight = new THREE.DirectionalLight(0xffeedd)
+        var directionalLight2 = new THREE.DirectionalLight(0xffeedd)
+        var directionalLight3 = new THREE.DirectionalLight(0xffeedd)
+        var directionalLight4 = new THREE.DirectionalLight(0xffeedd)
+        var directionalLight5 = new THREE.DirectionalLight(0xffeedd)
+        var directionalLight6 = new THREE.DirectionalLight(0xffeedd)
+        directionalLight.position.set(0, 0,1);
+        directionalLight2.position.set(0, 1,0);
+        directionalLight3.position.set(1, 0,0);
+        directionalLight4.position.set(-1, 0,0);
+        directionalLight5.position.set(0, -1,0);
+        directionalLight6.position.set(0, 0,-1);
+        scene.add(directionalLight)
+        scene.add(directionalLight2)
+        scene.add(directionalLight3)
+        scene.add(directionalLight4)
+        scene.add(directionalLight5)
+        scene.add(directionalLight6)
+        var bgBox = new THREE.PlaneGeometry(200,100)
+        var bgBox2 = new THREE.PlaneGeometry(200,200)
+        var basicBox = new THREE.PlaneGeometry(40,100)
+        var imgLoad = new THREE.TextureLoader()
+        function checkShow(){
+            showNum++
+            if(showNum > 12){
+                document.getElementById('loadingBox').style.display = 'none'
+            }else{
+                document.getElementById('loadingText').innerText = '已加载:'+ (showNum / 12 *100).toFixed(1) + '%'
+            }
+        }
+        // var bgImg = imgLoad.load('http://img.acgta5.top/bg.png')
+        // var bgImg2 = imgLoad.load('http://img.acgta5.top/bg2.png')
+        var bgImg = imgLoad.load('img/bg.png',function(){
+            checkShow()
+        })
+        var bgImg2 = imgLoad.load('img/bg2.jpg',function(){
+            checkShow()
+        })
+        var bgImgList = []
+        for(let i=0;i<10;i++){
+            bgImgList[i] = imgLoad.load('img/'+(i+1)+'.jpg',function() {
+                checkShow()
+            })
+        }
+        bgImg.wrapS = THREE.RepeatWrapping
+        bgImg.wrapT = THREE.RepeatWrapping
+        bgImg2.wrapS = THREE.RepeatWrapping
+        bgImg2.wrapT = THREE.RepeatWrapping
+        var ground = new THREE.Mesh(bgBox,new THREE.MeshLambertMaterial({
+            map:bgImg
+        }))
+        var ground2 = new THREE.Mesh(bgBox2,new THREE.MeshLambertMaterial({
+            map:bgImg2
+        }))
+        for(let i = 0; i<10 ;i++){
+            var imgBox = new THREE.Mesh(basicBox,new THREE.MeshLambertMaterial({map:bgImgList[i]}))
+            
+            if(i<=4){
+                imgBox.rotateY(-Math.PI / 2)
+                imgBox.position.set(100,48, + 40*(i+1)-120)
+            }else{
+                imgBox.rotateY(Math.PI / 2)
+                imgBox.position.set(-100,48,40*(i+1)-320)
+            }
+            scene.add(imgBox)
+        }
+        var video = document.getElementById('video')
+        video.play()
+        var videoTexture = new THREE.VideoTexture(video)
+        videoTexture.wrapS = videoTexture.wrapT = THREE.ClampToEdgeWrapping
+        videoTexture.minFilter = THREE.LinearFilter
+        videoTexture.magFilter = THREE.LinearFilter
+        var videoScreen = new THREE.Mesh(new THREE.PlaneGeometry(200,100),new THREE.MeshBasicMaterial({map:videoTexture})) 
+        videoScreen.rotateY(Math.PI)
+        videoScreen.position.set(0,48,100)
+        scene.add(videoScreen)
+        // bgImg.repeat.set(1,2)
+        // bgImg2.repeat.set(1,2)
+        ground.position.z = -100
+        ground.position.y = 48
+        ground2.position.y = -2
+        ground2.rotateX(-Math.PI / 2)
+        scene.add(ground)
+        scene.add(ground2)
+        var gltfLoader = new THREE.GLTFLoader()
+        var bodyMaterial = new THREE.MeshPhysicalMaterial({
+            color:0xff0000,metalness:0.9,roughness:0.2,clearcoat:0.05,clearcoatRoughness:0.05
+        })
+        var detailMaterial = new THREE.MeshStandardMaterial({
+            color: 0xffff00,metalness:0.6,roughness:0.4
+        })
+        var glassMaterial = new THREE.MeshPhysicalMaterial({
+            color: 0x333333,metalness: 0.6, roughness: 0.5,transmission:1,transparent:true
+        })
+        var glassMaterial = new THREE.MeshPhysicalMaterial({
+            color: 0x333333,metalness: 0.6, roughness: 0.5,transmission:1,transparent:true
+        })
+        const glassMaterial2 = new THREE.MeshBasicMaterial( {
+				color: 0x333333,transparent:true,opacity:0.2
+            } );
+        gltfLoader.load('obj/dz.gltf',function(obj){
+            obj.scene.scale.set(0.02,0.02,0.02)
+            obj.scene.getObjectByName('window_head').material = new THREE.MeshPhysicalMaterial({
+                color:0x333333,metalness:0.9,roughness:0.2,clearcoat:0.05,clearcoatRoughness:0.05
+            })
+            obj.scene.getObjectByName('window_back').material = glassMaterial2
+            obj.scene.getObjectByName('11').material = glassMaterial2
+            obj.scene.getObjectByName('12').material = glassMaterial2
+            obj.scene.getObjectByName('13').material = glassMaterial2
+            obj.scene.getObjectByName('14').material = glassMaterial2
+            obj.scene.getObjectByName('15').material = glassMaterial2
+            obj.scene.getObjectByName('21').material = glassMaterial2
+            obj.scene.getObjectByName('22').material = glassMaterial2
+            obj.scene.getObjectByName('23').material = glassMaterial2
+            obj.scene.getObjectByName('24').material = glassMaterial2
+            obj.scene.getObjectByName('25').material = glassMaterial2
+            obj.scene.getObjectByName('Object185').material = glassMaterial2
+            obj.scene.getObjectByName('Object145').material = glassMaterial2
+            obj.scene.getObjectByName('light_back').material = glassMaterial2
+            obj.scene.getObjectByName('far_zad01').material = glassMaterial2
+            //主体材质
+            obj.scene.getObjectByName('Plane01').material = bodyMaterial
+            obj.scene.getObjectByName('Object19').material = bodyMaterial
+            obj.scene.getObjectByName('Object165').material = bodyMaterial
+            obj.scene.rotateY(Math.PI / 2);
+            obj.scene.name = 'smallCar'
+            scene.add(obj.scene)
+            checkShow()
+        })
+        controls.autoRotate = true
+        controls.enablePan = false
+        controls.maxPolarAngle = Math.PI / 2 - Math.PI / 12
+        renderer.render(scene,camera)
+        function animate() {
+            stats.update()
+            controls.update()
+            requestAnimationFrame(animate)
+            renderer.render(scene,camera)
+        }
+        animate()
+    }
+</script>
 </html>

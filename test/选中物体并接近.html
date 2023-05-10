@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>选中</title>
+    <style>
+        body{
+            margin: 0;
+            padding: 0;
+        }
+        #reset{
+            position: fixed;
+            right: 0px;
+            bottom: 20px;
+            width: 30px;
+            height: 60px;
+            background: red;
+            cursor: pointer;
+            /* z-index: 9; */
+        }
+    </style>
+    <script src="./../js/three.min.js"></script>
+    <script src="./../js/stats.min.js"></script>
+    <script src="./../js/Tween.js"></script>
+    <script src="./../js/OrbitControls.js"></script>
+</head>
+<body>
+    <div style="position: fixed;top: 0;left: 50%;">
+        <a href="./../index.html">返回主页</a>
+    </div>
+    <div id="main"></div>
+    <div id="reset"></div>
+</body>
+<script>
+    let scene,camera,renderer,stats,controls,tween,clock = new THREE.Clock()
+    window.onload = function() {
+        let rayLine = new THREE.Raycaster()
+        let pos = new THREE.Vector2()
+        let color = '0,1,2,3,4,5,6,7,8,9,a,b,c,d,e,f'.split(',')
+        function rayClick(e) {
+            pos.x = (e.clientX / window.innerWidth) * 2  - 1
+            pos.y = -(e.clientY / window.innerHeight) * 2 + 1
+            rayLine.setFromCamera(pos,camera)
+            var insects = rayLine.intersectObjects(scene.children)
+            console.log(insects,camera)
+            if(insects.length){
+                var obj = insects[0].object
+                var distance = obj.position.distanceTo(camera.position)
+                console.log(distance)
+                var pos1 = {}
+                if(distance > 10){
+                    pos1.x = obj.position.x+(camera.position.x-obj.position.x)/5
+                    pos1.y = obj.position.y+(camera.position.y-obj.position.y)/5
+                    pos1.z = obj.position.z+(camera.position.z-obj.position.z)/5
+                }else {
+                    pos1 = camera.position
+                }
+                
+                new TWEEN.Tween(camera.position).to(pos1,1000).start()
+                new TWEEN.Tween(controls.target).to(obj.position,1000).start()
+                // insects[0].object.position.distanceTo()
+                insects[0].object.material.color.set(randomColor())
+            }
+        }
+        function init(){
+            scene = new THREE.Scene()
+            camera = new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight)
+            camera.position.set(0,5,10)
+            renderer = new THREE.WebGLRenderer({antialias:true})
+            renderer.setClearColor(0xffffff)
+            renderer.setSize(window.innerWidth,window.innerHeight)
+            stats = new Stats(renderer.domElement)
+            controls = new THREE.OrbitControls(camera,renderer.domElement)
+            document.getElementById('main').appendChild(stats.dom)
+            document.getElementById('main').appendChild(renderer.domElement)
+            window.addEventListener('click',rayClick,false)
+            document.getElementById('reset').addEventListener('click',function(){
+                console.log(camera.position)
+                var distance = camera.position.distanceTo(new THREE.Vector3(0,5,10))
+                if(distance > 100){
+                    time = 1500
+                }else{
+                    time = 1000
+                }
+                tween = new TWEEN.Tween(camera.position).to({x:0,y:5,z:10},time).start()
+                new TWEEN.Tween(controls.target).to({x:0,y:0,z:0},time).start()
+            })
+        }
+        function randomColor(){
+            var colorStr = '#'
+            for(let i = 0 ; i < 6 ; i++){
+                colorStr += color[Math.floor(Math.random() * 16) % 16]
+            }
+            return colorStr
+        }
+        function main() {
+            for(let i = 0 ; i < 1000 ; i++){
+                let cube = new THREE.Mesh(
+                    new THREE.BoxGeometry(1,1,1),
+                    new THREE.MeshBasicMaterial({color:randomColor()})
+                )
+                cube.position.x = 100 - Math.floor(Math.random() * 200)
+                cube.position.y = 100 - Math.floor(Math.random() * 200)
+                cube.position.z = 100 - Math.floor(Math.random() * 200)
+                cube.rotation.x = Math.PI * (Math.random().toFixed(2))
+                cube.rotation.y = Math.PI * (Math.random().toFixed(2))
+                cube.rotation.z = Math.PI * (Math.random().toFixed(2))
+                scene.add(cube)
+            }
+            
+        }
+        function animate() {
+            TWEEN.update()
+            stats.update()
+            controls.update(clock.getDelta())
+            renderer.render(scene,camera)
+            requestAnimationFrame(animate)
+        }
+        init()
+        main()
+        animate()
+    }
+</script>
+</html>

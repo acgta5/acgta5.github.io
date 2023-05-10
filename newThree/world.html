@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        html,body{
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <script type="module">
+        import * as THREE from './js/three.module.js'
+        import {OrbitControls} from './js/OrbitControls.js'
+        let scene,camera,renderer,controls
+        scene = new THREE.Scene()
+        camera = new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight,1,100)
+        camera.position.set(0,0,10)
+        renderer = new THREE.WebGLRenderer()
+        renderer.setClearColor(0xffffff)
+        renderer.setSize(window.innerWidth,window.innerHeight)
+        controls = new OrbitControls(camera,renderer.domElement)
+        document.body.appendChild(renderer.domElement)
+        let loader  = new THREE.TextureLoader().setPath('./img/')
+        let arr = "posx,negx,posy,negy,posz,negz".split(',')
+        let textureArr = []
+        for(let i = 0,len = arr.length; i < len ; i++) {
+            textureArr.push(new THREE.MeshBasicMaterial({map:loader.load(arr[i]+'.jpg'),side:THREE.BackSide}))
+        }
+        
+        let cube = new THREE.Mesh(
+            new THREE.BoxGeometry(100,100,100),
+            textureArr
+        )
+        cube.position.set(0,0,0)
+        scene.add(cube)
+        animate()
+        function animate() {
+            controls.update()
+            renderer.render(scene,camera)
+            requestAnimationFrame(animate)
+        }
+    </script>
+</body>
+</html>

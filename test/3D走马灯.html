@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body{
+            margin: 0;
+            padding: 0;
+        }
+        .main{
+            width: 600px;
+            height: 300px;
+            margin: 30px auto;
+            perspective: 1000px;
+            overflow: hidden;
+        }
+        .container{
+            transition: 1s;
+            position: relative;
+            /* animation: rotateY 1s infinite; */
+            transform-style: preserve-3d;
+        }
+        .container .content{
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+        .content>img{
+            display: block;
+            width: 600px;
+        }
+        .content:nth-child(1){transform: rotateY(0) translateZ(180px);}
+        .content:nth-child(2){transform: rotateY(120deg) translateZ(180px);}
+        .content:nth-child(3){transform: rotateY(240deg) translateZ(180px);}
+        @keyframes rotateY {
+            from {
+                transform: rotateY(0);
+            }
+            to{
+                transform: rotateY(-120deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main">
+        <div class="container" id="container">
+            <div class="content"><img src="./../img/earth1.jpg" alt="" srcset=""></div>
+            <div class="content"><img src="./../img/earth2.jpg" alt="" srcset=""></div>
+            <div class="content"><img src="./../img/earth3.png" alt="" srcset=""></div>
+        </div>
+    </div>
+    <script>
+        window.onload = function() {
+            let degVal = 0
+            setInterval(function() {
+                if(degVal === 360){
+                    degVal = 0
+                }
+                document.getElementById('container').style = `transform: rotateY(${degVal}deg)`
+                degVal += 120
+            },1000)
+        }
+    </script>
+</body>
+</html>

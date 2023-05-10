@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body{
+            margin: 0;
+            padding: 0;
+        }
+        .mask{
+            position: fixed;
+            top:0;
+            right: 0;
+            left: 0;
+            bottom: 0;
+            z-index: 9;
+            background: #ffffff;
+            text-align: center;
+            font-size: 32px;
+            color: #333333;
+        }
+        .mask .text{
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%,-50%);
+            height: 60px;
+            line-height: 60px;
+        }
+        .wrap{
+            width: 500px;
+            height: 300px;
+            background: 
+            conic-gradient(
+                /* red,blue,green,pink,yellow */
+                from -45deg at 200px 100px,
+                hsla(170deg, 100%, 70%, .7),
+                transparent 50%,
+                hsla(219deg, 90%, 80%, .5) 100%
+            ),
+            linear-gradient(-45deg,#060d5e,#002268);
+        }
+        .wrap .shadow{
+            width: 100px;
+            height: 100px;
+            background: #ffffff;
+        }
+    </style>
+</head>
+<body>
+    <!-- <div class="wrap">
+        <div class="shadow"></div>
+    </div> -->
+    <div class="mask">
+        <div class="text" id="text"></div>
+    </div>
+    <div id="three"></div>
+    <script type="module">
+        import * as THREE from './js/three.module.js'
+        import {OrbitControls} from './js/OrbitControls.js'
+        import {GLTFLoader} from './js/GLTFLoader.js'
+        import {DRACOLoader} from './js/DRACOLoader.js'
+        let scene,camera,renderer,controls,imgLoader = new THREE.TextureLoader(),gltfLoader = new GLTFLoader(),dracoLoader = new DRACOLoader()
+        let rayCaster = new THREE.Raycaster()
+        let clickPoint = new THREE.Vector2()
+        function mouseClick (event) {
+            clickPoint.x = (event.clientX / window.innerWidth) * 2 - 1;
+            clickPoint.y = -(event.clientY / window.innerHeight ) * 2 + 1;
+            rayCaster.setFromCamera(clickPoint,camera)
+            let objects = rayCaster.intersectObjects(scene.children,true)
+            if(objects.length) {
+                let position = objects[0].point
+                let cameraPosition = {
+                    x: position.x + ( (camera.position.x - position.x) > 10 ? 10  : -10 ),
+                    y: position.y + ( (camera.position.y - position.y) > 10 ? 10 : -10),
+                    z: position.z + ( (camera.position.z - position.z) > 10 ? 10 : -10),
+                }
+                console.log(cameraPosition)
+                controls.target=position
+                    camera.position.set(cameraPosition.x,cameraPosition.y,cameraPosition.z)
+                    camera.lookAt(position)
+            }
+        }
+        window.addEventListener('dblclick',mouseClick)
+        let text = document.getElementById('text')
+        dracoLoader.setDecoderPath('./js/gltf/')
+        gltfLoader.setDRACOLoader(dracoLoader)
+        let tunnelModel = ''
+        scene = new THREE.Scene()
+        camera = new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight)
+        camera.position.set(0,100,100)
+        initTunnel()
+        let light = new THREE.AmbientLight(0xffffff)
+        scene.add(light)
+        renderer = new THREE.WebGLRenderer({antialias:true})
+        renderer.setSize(window.innerWidth,window.innerHeight-5)
+        renderer.setClearColor(0xffffff)
+        document.getElementById('three').appendChild(renderer.domElement)
+        controls = new OrbitControls(camera,renderer.domElement)
+        controls.maxPolarAngle = Math.PI / 2 - Math.PI / 64
+        let cube = new THREE.Mesh(
+            new THREE.BoxGeometry(10,10,10),
+            new THREE.MeshBasicMaterial({color:0xff0000})
+        )
+        cube.position.set(0,0,80)
+        // scene.add(cube)
+        function initTunnel() {
+            gltfLoader.load('./obj/tunnel.glb',(glb) => {
+                tunnelModel = glb.scene.children[0]
+                console.log(tunnelModel)
+                scene.add(tunnelModel)
+                document.querySelector('.mask').style.display = 'none'
+                console.log(scene)
+            },xhr => {
+                text.innerText = '已加载'+(xhr.loaded/xhr.total*100 -0.01).toFixed(2)+'%'
+                // console.log('加载完成的百分比'+(xhr.loaded/xhr.total*100 -0.01).toFixed(2)+'%');
+            })
+        }
+        renderer.render(scene,camera)
+        function animate() {
+            controls.update()
+            // console.log(cube.position)
+            renderer.render(scene,camera)
+            requestAnimationFrame(animate)
+        }
+        animate()
+    </script>
+</body>
+</html>

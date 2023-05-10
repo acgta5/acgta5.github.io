@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        html,body{
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+    <script type="module">
+        let num = 1
+        switch(num) {
+            case 0:
+            break
+            case 1:
+            for(let i = 0 ; i< 10 ; i++) {
+                if(i > 5) {
+                    console.log(i);
+                    break
+                }
+            }
+            console.log(num)
+            break
+        }
+    </script>
+</head>
+<body>
+    <script type="module">
+        import * as THREE from './../js/three.module.js'
+        import Stats from './../js/stats.module.js'
+        import {OrbitControls} from './../js/OrbitControls.js'
+        let scene,camera,renderer,controls,stats,cloudArr = [],clock
+        scene = new THREE.Scene()
+        camera = new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight)
+        camera.position.set(0,0,1000)
+        renderer = new THREE.WebGLRenderer()
+        renderer.setSize(window.innerWidth,window.innerHeight - 4)
+        controls = new OrbitControls(camera,renderer.domElement)
+        controls.enablePan = false
+        controls.enableRotate = false
+        stats = new Stats()
+        document.body.appendChild(renderer.domElement)
+        document.body.appendChild(stats.domElement)
+        let ambientLight = new THREE.AmbientLight(0xffffff)
+        let pointLight = new THREE.PointLight(0x3fffff)
+        pointLight.position.set(0,0,400)
+        scene.add(ambientLight)
+        scene.add(pointLight)
+        let loader = new THREE.TextureLoader().setPath('./../img/')
+        loader.load('smoke.png',texture => {
+            let geo = new THREE.PlaneBufferGeometry(350,350)
+            let mat = new THREE.MeshStandardMaterial({
+                map:texture,
+                transparent:true
+            })
+            for(let i = 880 ; i> 250 ; i--){
+                let cloud = new THREE.Mesh(geo,mat)
+                cloud.position.set(
+                    0.5 * i * Math.cos(4 * i * Math.PI / 180),
+                    0.5 * i * Math.sin(4 * i * Math.PI / 180),
+                    0.2 * i
+                )
+                cloud.rotation.z = Math.random() * 360
+                scene.add(cloud)
+                cloudArr.push(cloud)
+            }
+            clock = new THREE.Clock()
+            animate()
+        })
+        function animate() {
+            let delta = clock.getDelta()
+            stats.update()
+            cloudArr.forEach(c => {
+                c.rotation.z += delta * 2
+            })
+            if(Math.random() > 0.9) pointLight.power = Math.random() * 50 + 10
+            renderer.render(scene,camera)
+            requestAnimationFrame(animate)
+        }
+    </script>
+</body>
+</html>

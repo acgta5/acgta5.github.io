@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        html,body{
+            margin:0;
+            padding: 0;
+        }
+        #changePos{
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translate(-50%);
+        }
+    </style>
+</head>
+<body>
+    <button id="changePos">切换动作</button>
+    <script type="module">
+        import * as THREE from './js/three.module.js'
+        import {OrbitControls} from './js/OrbitControls.js'
+        import {GLTFLoader} from './js/GLTFLoader.js'
+        import Stats from './js/stats.module.js'
+        let scene,camera,renderer,controls,stats,gltfLoader,sceneLight,mixer,clock,actions
+        function init() {
+            scene = new THREE.Scene()
+            camera = new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight)
+            camera.position.set( 1, 2, - 3 );
+            camera.lookAt( 0, 10, 0 );
+            sceneLight = new THREE.AmbientLight(0xffffff)
+            scene.add(sceneLight)
+            renderer = new THREE.WebGLRenderer({antialias:true})
+            renderer.setSize(window.innerWidth,window.innerHeight)
+            renderer.setClearColor(0xffffff)
+            document.body.appendChild(renderer.domElement)
+            stats = new Stats()
+            document.body.appendChild(stats.domElement)
+            controls = new OrbitControls(camera,renderer.domElement)
+            gltfLoader = new GLTFLoader().setPath('./obj/')
+            main()
+        }
+        function main() {
+            let posNum = 1
+            function changePos() {
+                actions.forEach(action => {
+                    action.stop()
+                })
+                if(posNum === 3){
+                    posNum = 0
+                }
+                actions[posNum].play()
+                posNum++
+            }
+            gltfLoader.load('Soldier.glb',obj => {
+                console.log(obj)
+                let gltf = obj.scene
+                scene.add(gltf)
+                mixer = new THREE.AnimationMixer(gltf)
+                let action1 = mixer.clipAction(obj.animations[0])
+                let action2 = mixer.clipAction(obj.animations[1])
+                let action3 = mixer.clipAction(obj.animations[3])
+                actions = [action1,action2,action3]
+                actions[0].play()
+                clock = new THREE.Clock()
+                animate()
+                document.getElementById('changePos').addEventListener('click',changePos)
+            })
+            
+        }
+        function animate() {
+            let delta = clock.getDelta()
+            controls.update()
+            stats.update()
+            mixer.update(delta)
+            renderer.render(scene,camera)
+            requestAnimationFrame(animate)
+        }
+        init()
+    </script>
+</body>
+</html>

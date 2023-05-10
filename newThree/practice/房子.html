@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        html,body{
+            margin: 0;
+            padding: 0;
+        }
+        #reset,#changeCamera,#changeVideo{
+            width: 40px;
+            height: 20px;
+            line-height: 18px;
+            cursor: pointer;
+            text-align: center;
+            color: red;
+            position: fixed;
+            border: 1px solid #3399ff;
+            top: 3px;
+            left: 50%;
+            transform: translate(-50%);
+        }
+        #changeCamera{
+            width: 100px;
+            left: 60%;
+        }
+        #changeVideo{
+            width: 100px;
+            left:40%
+        }
+    </style>
+</head>
+<body>
+    <video id="video" src="./../img/bg.mp4"  loop muted style="display: none;"></video>
+    <div id="reset"><=</div>
+    <div id="changeCamera">汽车视角</div>
+    <div id="changeVideo">视频视角</div>
+    <script type="module">
+        import * as THREE from './../js/three.module.js'
+        import {OrbitControls} from './../js/OrbitControls.js'
+        import Stats from './../js/stats.module.js'
+        import {DRACOLoader} from './../js/DRACOLoader.js'
+        import {GLTFLoader} from './../js/GLTFLoader.js'
+        let scene,camera,renderer,stats,controls,gltfLoader,darcoLoader,mixer,mixerArr = [],clock,soldierGlb,horseGLb,mouse = new THREE.Vector2(),raycaster = new THREE.Raycaster()
+        scene = new THREE.Scene()
+        camera = new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight,1,10000)
+        camera.position.set(20,20,0)
+        let carCamera = new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight)
+        carCamera.position.set(0,2.5,6)
+        let isCarView = false,isVideoView = false
+        renderer = new THREE.WebGLRenderer({antialias:true})
+        renderer.setSize(window.innerWidth,window.innerHeight - 4)
+        renderer.setClearColor(0x20211F)
+        renderer.shadowMap.enabled = true
+        let ambinentLight = new THREE.AmbientLight(0x404040)
+        scene.add(ambinentLight)
+        let pointLight = new THREE.PointLight(0xffffff,0.8,50)
+        pointLight.castShadow = true
+        pointLight.position.set(0,30,0)
+        scene.add(pointLight)
+        let dirLight1 = new THREE.DirectionalLight(0xffffff,0.5)
+        let dirLight2 = new THREE.DirectionalLight(0xffffff,0.5)
+        let dirLight3 = new THREE.DirectionalLight(0xffffff,0.5)
+        let dirLight4 = new THREE.DirectionalLight(0xffffff,0.5)
+        dirLight1.position.set(0,0,1)
+        dirLight2.position.set(0,1,0)
+        dirLight3.position.set(1,0,0)
+        dirLight4.position.set(0,0,-1)
+        scene.add(dirLight1)
+        scene.add(dirLight2)
+        scene.add(dirLight3)
+        scene.add(dirLight4)
+        stats = new Stats()
+        controls = new OrbitControls(camera,renderer.domElement)
+        controls.maxPolarAngle = Math.PI / 2
+        document.body.appendChild(renderer.domElement)
+        document.body.appendChild(stats.domElement)
+        let imgLoader = new THREE.TextureLoader().setPath('./../img/')
+        initGround()
+        let yellowLine1 = new THREE.Mesh(
+            new THREE.PlaneBufferGeometry(0.4,100),
+            new THREE.MeshBasicMaterial({
+                color: 0xffff00
+            })
+        )
+        let yellowLine2 = new THREE.Mesh(
+            new THREE.PlaneBufferGeometry(0.4,100),
+            new THREE.MeshBasicMaterial({
+                color: 0xffff00
+            })
+        )
+        yellowLine1.rotation.x = -Math.PI / 2
+        yellowLine2.rotation.x = -Math.PI / 2
+        yellowLine1.position.x = 2.7
+        yellowLine2.position.x = 3.3
+        yellowLine1.position.y = -1.99
+        yellowLine2.position.y = -1.99
+        scene.add(yellowLine1)
+        scene.add(yellowLine2)
+        function initGround(){
+            let geo = new THREE.PlaneBufferGeometry(20,100)
+            let roadGeo = new THREE.PlaneBufferGeometry(5,100)
+            imgLoader.load('ground.jpg',texture => {
+                let ground = new THREE.Mesh(
+                    geo,
+                    new THREE.MeshStandardMaterial({map:texture,side:THREE.DoubleSide})
+                )
+                ground.rotation.x = -Math.PI / 2
+                ground.position.y = -2
+                ground.receiveShadow = true
+                scene.add(ground)
+            })
+            imgLoader.load('road.jpg',texture => {
+                texture.wrapS = THREE.RepeatWrapping
+                texture.wrapT = THREE.RepeatWrapping
+                texture.magFilter = THREE.NearestFilter
+                texture.repeat.set(2,8)
+                let roadMat = new THREE.MeshStandardMaterial({map:texture})
+                let road1 = new THREE.Mesh(roadGeo,roadMat)
+                let road2 = new THREE.Mesh(roadGeo,roadMat)
+                road1.receiveShadow = true
+                road2.receiveShadow = true
+                road1.rotation.x = -Math.PI / 2
+                road2.rotation.x = -Math.PI / 2
+                road2.rotation.z = Math.PI
+                road2.position.y = -1.99
+                road1.position.y = -1.99
+                road2.position.x = 6
+                scene.add(road1)
+                scene.add(road2)
+            })
+        }
+        
+        gltfLoader = new GLTFLoader().setPath('./../obj/')
+        darcoLoader = new DRACOLoader()
+        darcoLoader.setDecoderPath('./../js/gltf/')
+        gltfLoader.setDRACOLoader(darcoLoader)
+        gltfLoader.load('LittlestTokyo.glb',obj => {
+            let gltf = obj.scene
+            gltf.traverse(item => {
+                if(item.isMesh){
+                    item.castShadow = true
+                }
+            })
+            gltf.scale.set(0.01,0.01,0.01)
+            gltf.position.x = -5
+            scene.add(gltf)
+            let mixer = new THREE.AnimationMixer(gltf)
+            mixer.clipAction(obj.animations[0]).play()
+            mixerArr.push(mixer)
+            clock = new THREE.Clock()
+            animate()
+        })
+        gltfLoader.load('Soldier.glb',obj => {
+            soldierGlb = obj.scene
+            soldierGlb.castShadow = true
+            soldierGlb.receiveShadow = true
+            soldierGlb.position.y = -1.99
+            soldierGlb.castShadow = true
+            soldierGlb.traverse(item => {
+                if(item.isMesh){
+                    item.castShadow = true
+                }
+            })
+            let mixer = new THREE.AnimationMixer(soldierGlb)
+            mixer.clipAction(obj.animations[1]).play()
+            mixerArr.push(mixer)
+            scene.add(soldierGlb)
+        })
+        gltfLoader.load('Horse.glb',obj => {
+            horseGLb = obj.scene
+            horseGLb.position.set(1,-1.99,-45)
+            horseGLb.scale.set(0.01,0.01,0.01)
+            horseGLb.traverse(item => {
+                if(item.isMesh){
+                    item.castShadow = true
+                }
+            })
+            scene.add(horseGLb)
+            let mixer = new THREE.AnimationMixer(horseGLb)
+            mixer.clipAction(obj.animations[0]).play()
+            mixerArr.push(mixer)
+        })
+        let carGlb,newCarObj,carMove = true,horseMove = true,carClock,horseClock
+        gltfLoader.load('ferrari.glb',obj => {
+            carGlb = obj.scene
+            carGlb.position.set(1.1,-1.99,45)
+            newCarObj = carGlb.clone()
+            newCarObj.position.set(4.5,-1.99,-45)
+            newCarObj.rotation.y = Math.PI 
+            newCarObj.add(carCamera)
+            scene.add(carGlb)
+            scene.add(newCarObj)
+            for(let i = 0 ; i< 6; i++){
+                let newCarClone = obj.scene.clone()
+                newCarClone.position.set(-5,-1.99,i < 3 ? (i+1) * 10 : (i-3+1) * -10)
+                newCarClone.rotation.y = -Math.PI * 0.5
+                scene.add(newCarClone)
+            }
+        })
+        let videoBox
+        function play(){
+            let video = document.getElementById('video')
+            video.play()
+            let videoTexture = new THREE.VideoTexture(video)
+            videoTexture.wrapS = videoTexture.wrapT = THREE.ClampToEdgeWrapping
+            videoTexture.minFilter = THREE.LinearFilter
+            videoTexture.magFilter = THREE.LinearFilter
+            videoTexture.format = THREE.RGBFormat
+            videoBox = new THREE.Mesh(
+                new THREE.CircleGeometry(16,32),
+                new THREE.MeshBasicMaterial({map:videoTexture})
+            )
+            videoBox.position.set(-20,5,0)
+            videoBox.lookAt(camera.position)
+            scene.add(videoBox)
+        }
+        function mouseClick(e) {
+            mouse.x = (e.clientX / window.innerWidth) * 2 - 1
+            mouse.y =  -(e.clientY / window.innerHeight) * 2 + 1
+            raycaster.setFromCamera(mouse,camera)
+            let obj = raycaster.intersectObjects(scene.children)
+            console.log(obj || obj[0].position)
+        }
+        play()
+        function animate() {
+            let delta = clock.getDelta()
+            let delta2 = clock.getElapsedTime() / 2
+            pointLight.position.set(
+                Math.cos(delta2) * 10 - 10,
+                10,
+                Math.sin(delta2) * 10
+            )
+            if(videoBox){
+                videoBox.lookAt(camera.position)
+            }
+            if(soldierGlb) {
+                soldierGlb.position.y = THREE.Math.lerp(-1.99,1,Math.abs(Math.cos(delta2 * 3)))
+                if(soldierGlb.position.z < -50){
+                    soldierGlb.position.z  = 50
+                }
+                soldierGlb.position.z -=0.2
+            }
+            if(horseGLb) {
+                if(horseGLb.position.z >= carGlb.position.z - 3 && horseMove){
+                    horseMove = false
+                    horseGLb.rotation.z = Math.PI / 2
+                    clearTimeout(horseClock)
+                    horseClock = setTimeout(()=>{
+                        horseMove = true
+                        horseGLb.rotation.z = 0
+                        horseGLb.position.z  = -45
+                    },2000)
+                }else if(horseMove){
+                    horseGLb.position.z +=0.5
+                }
+            }
+            if(carGlb) {
+                if(horseGLb.position.z >= carGlb.position.z - 3 && carMove){
+                    carMove = false
+                    // carGlb.position.z  = -12
+                    carGlb.rotation.y = Math.PI / 3
+                    clearTimeout(carClock)
+                    carClock = setTimeout(()=>{
+                        carMove = true
+                        carGlb.rotation.y = 0
+                        carGlb.position.z = 45
+                    },2000)
+                } else if(carMove){
+                    carGlb.position.z -= 1
+                }
+                
+            }
+            if(newCarObj) {
+                if(newCarObj.position.z > 45) {
+                    newCarObj.position.z = -45
+                    // newCarObj.visible = false
+                    // if(newCarObj.position.z > 100) {
+                    //     newCarObj.position.z = -45
+                    //     newCarObj.visible = true
+                    // }
+                }
+                newCarObj.position.z += 0.5
+            }
+            controls.update()
+            stats.update()
+            mixerArr.forEach(mixer => {
+                mixer.update(delta)
+            })
+            if(isCarView && newCarObj.visible) {
+                renderer.render(scene,carCamera)
+            } else {
+                renderer.render(scene,camera)
+            }
+            requestAnimationFrame(animate)
+        }
+        document.addEventListener('click',mouseClick)
+        document.getElementById('reset').addEventListener('click',function() {
+            controls.reset()
+            controls.target = new THREE.Vector3(0,0,0)
+            videoBox.position.set(-20,5,0)
+            camera.position.set(20,20,0)
+            isCarView = false
+            isVideoView = false
+            controls.enabled = true
+        })
+        document.getElementById('changeCamera').addEventListener('click',function() {
+            isCarView = !isCarView
+            controls.enabled = isCarView ? false : true
+        })
+        document.getElementById('changeVideo').addEventListener('click',function() {
+            isVideoView = !isVideoView
+            isVideoView ? camera.position.set(-8,5,0) : camera.position.set(20,20,0)
+            isVideoView ? controls.target = videoBox.position : controls.target = new THREE.Vector3(0,0,0)
+            controls.enabled = isVideoView ? false : true
+        })
+    </script>
+</body>
+</html>

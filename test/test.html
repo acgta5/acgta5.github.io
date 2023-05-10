@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="./../js/three.min.js"></script>
+    <script src="./../js/CSS3DRenderer.js"></script>
+    <script src="./../js/stats.min.js"></script>
+    <script src="./../js/OrbitControls.js"></script>
+    <style>
+        html,body{
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="three"></div>
+    <script>
+        window.onload = function(e) {
+            var scene, renderer, camera , stats , controls
+            function init() {
+                scene = new THREE.Scene()
+                camera = new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight)
+                camera.position.set(0,0,10)
+                renderer = new THREE.WebGLRenderer({antialias:true})
+                renderer.setClearColor(0xffffff)
+                renderer.setSize(window.innerWidth,window.innerHeight)
+                stats = new Stats(renderer.domElement)
+                controls = new THREE.OrbitControls(camera,renderer.domElement)
+                document.getElementById('three').appendChild(stats.dom)
+                document.getElementById('three').appendChild(renderer.domElement)
+            }
+            init()
+            var cube = new THREE.Mesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshBasicMaterial({color:0xff0000}))
+            scene.add(cube)
+            animate()
+            function animate() {
+                controls.update()
+                stats.update()
+                cube.rotation.x += 0.01
+                cube.rotation.z += 0.01
+                requestAnimationFrame(animate)
+                renderer.render(scene,camera)
+            }
+        }
+    </script>
+</body>
+</html>

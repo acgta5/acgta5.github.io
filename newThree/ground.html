@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body{
+            margin: 0;
+            padding: 0;
+        }
+        .btn{
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            width: 100px;
+            height: 40px;
+            line-height: 40px;
+            color: #0099ff;
+            background-color: #404040;
+            text-align: center;
+            transform: translate(-50%);
+        }
+    </style>
+</head>
+<body>
+    <div id="btn" class="btn">切换视角</div>
+    <div id="three"></div>
+    <script type="module">
+        import * as THREE from './js/three.module.js'
+        import {OrbitControls} from './js/OrbitControls.js'
+        import {RectAreaLightUniformsLib} from './js/RectAreaLightUniformsLib.js'
+        let scene,camera,renderer,controls,objects=[],cameraTarget = new THREE.Vector3(),speed = 0.5,clock = new THREE.Clock(),isAnimate = false,tankCamera,isTankView = false
+        scene = new THREE.Scene()
+        camera = new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight)
+        tankCamera = new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight)
+        tankCamera.position.set(0,5,-20)
+        tankCamera.rotation.y = Math.PI;
+        camera.position.set(0,200,50)
+        camera.lookAt(0,0,0)
+        renderer = new THREE.WebGLRenderer({antialias:true,alpha:true})
+        renderer.setSize(window.innerWidth,window.innerHeight  - 10)
+        renderer.setClearColor(0xffffff)
+        renderer.shadowMap.enabled = true;
+        document.getElementById('three').appendChild(renderer.domElement)
+        controls = new OrbitControls(camera,renderer.domElement)
+        controls.maxPolarAngle = Math.PI / 2
+        let imgLoader = new THREE.TextureLoader()
+        let ground = new THREE.Mesh(
+            new THREE.PlaneGeometry(300,300),
+            new THREE.MeshStandardMaterial({color:0xCC8866})
+        )
+        ground.rotation.x = -Math.PI / 2
+        ground.position.y = -3
+        ground.receiveShadow = true
+        let curse = new THREE.SplineCurve([
+            new THREE.Vector2(80,0),
+            new THREE.Vector2(80,80),
+            new THREE.Vector2(0,80),
+            new THREE.Vector2(-80,80),
+            new THREE.Vector2(-80,0),
+            new THREE.Vector2(-80,-80),
+            new THREE.Vector2(0,-80),
+            new THREE.Vector2(80,-80),
+            new THREE.Vector2(80,0),
+        ])
+        let points = curse.getPoints(50)
+        let tankLine = new THREE.Line(
+            new THREE.BufferGeometry().setFromPoints(points),
+            new THREE.LineBasicMaterial({color:0xffffff,opacity:0,transparent:true})
+        )
+        // tankLine.material.color.setStyle('rgba(0,0,0,0)')
+        // tankLine.transparent = true
+        tankLine.rotation.x = Math.PI / 2
+        scene.add(tankLine)
+        let light = new THREE.DirectionalLight(0x404040)
+        light.castShadow = true;
+        light.shadow.mapSize.width = 2048;
+        light.shadow.mapSize.height = 2048;
+        const d = 300;
+        light.shadow.camera.left = -d;
+        light.shadow.camera.right = d;
+        light.shadow.camera.top = d;
+        light.shadow.camera.bottom = -d;
+        light.shadow.camera.near = 1;
+        light.shadow.camera.far = 50;
+        light.shadow.bias = 0.001;
+        light.position.set(0,40,0)
+        let baseLight = new THREE.AmbientLight(0x404040)
+        scene.add(baseLight)
+        scene.add(light)
+        scene.add(ground)
+        let dipanMesh = imgLoader.load('./img/micai2.jpg')
+        let dipanMesh2 = imgLoader.load('./img/micai.jpg')
+        function createTank() {
+            let tank = new THREE.Object3D()
+            let dipan = new THREE.Mesh(
+                new THREE.BoxGeometry(5,2,10),
+                new THREE.MeshPhongMaterial({
+                    map: dipanMesh
+                })
+            )
+            dipan.castShadow = true;
+            tank.add(dipan)
+            tank.lunTaiArr = []
+            for(let i = 0 ; i < 6 ; i++) {
+                let lunTai = createPie()
+                lunTai.rotation.z = Math.PI / 2
+                    if(i<3) {
+                            lunTai.position.x= 2.75
+                            lunTai.position.z= -3.2 + i * 3.2
+                    } else {
+                            lunTai.position.x= -2.75
+                            lunTai.position.z= -3.2 + (i-3) * 3.2
+                    }
+                tank.lunTaiArr.push(lunTai)
+                lunTai.castShadow = true;
+                tank.add(lunTai)
+            }
+            let topHalf = new THREE.Mesh(
+                new THREE.SphereGeometry(2,32,32),
+                new THREE.MeshPhongMaterial({map:dipanMesh2})
+            )
+            topHalf.position.y = 1
+            let topBar = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.1,0.1,5,32),
+                new THREE.MeshPhongMaterial({map:dipanMesh2})
+            )
+            topBar.castShadow = true
+            topBar.position.set(0,1,4.2)
+            // topPart.add(topHalf)
+            topBar.rotation.x = Math.PI/ 2 - 0.2
+            topHalf.add(topBar)
+            // topHalf.rotation.x= Math.PI / 4
+            let backPart = new THREE.Object3D()
+            let backOil = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.5,0.5,1,32),
+                new THREE.MeshPhongMaterial({map: dipanMesh})
+            )
+            backOil.position.x = -1
+            backOil.rotation.z = Math.PI / 2
+            let backOil2 = backOil.clone()
+            backOil2.position.x = 1
+            backPart.add(backOil)
+            backPart.add(backOil2)
+            backPart.position.set(0,1,-5.5)
+            let frontPart = new THREE.Object3D()
+            let rushB = createFrontPart(0.3,3)
+            rushB.rotation.x = Math.PI / 2
+            let rushBl = createFrontPart(0.3,1)
+            rushBl.position.set( -1,0,-1)
+            rushBl.rotation.x = Math.PI / 2
+            let rushBr = createFrontPart(0.3,1)
+            rushBr.position.set( 1,0,-1)
+            rushBr.rotation.x = Math.PI / 2
+            rushB.castShadow = true
+            rushBl.castShadow = true
+            rushBr.castShadow = true
+            RectAreaLightUniformsLib.init()
+            // let frontLightL = new THREE.RectAreaLight(0xffffff,1,0.5,1)
+            // let frontLightR = new THREE.RectAreaLight(0xffffff,1,0.5,1)
+            let frontLightL = new THREE.SpotLight(0xffffff,1,20,Math.PI / 4)
+            let frontLightR = new THREE.SpotLight(0xffffff,1,20,Math.PI / 4)
+            frontLightL.castShadow = false;
+            frontLightR.castShadow = false;
+            frontLightL.position.set(2,0.5,5.1)
+            frontLightR.position.set(-2,0.5,5.1)
+            let xL = new THREE.Object3D()
+            let xR = new THREE.Object3D()
+            tank.add(xL)
+            tank.add(xR)
+            xL.position.set(2, 0.5,10)
+            xR.position.set(-2, 0.5, 10)
+            frontLightL.target = xL
+            frontLightR.target = xR
+            // scene.add(frontLightL.target)
+            frontLightL.lookAt(2, 0.5,10);
+            frontLightR.lookAt(-2, 0.5, 10);
+            let frontMesh = new THREE.Mesh( new THREE.CircleBufferGeometry(0.2), new THREE.MeshBasicMaterial( { side: THREE.BackSide } ) )
+            let frontMesh2 = new THREE.Mesh( new THREE.CircleBufferGeometry(0.2), new THREE.MeshBasicMaterial( { side: THREE.BackSide } ) )
+            frontLightL.add(frontMesh)
+            frontLightR.add(frontMesh2)
+            // frontLightL.rotation.z = Math.PI / 4
+            frontPart.add(rushB)
+            frontPart.add(rushBl)
+            frontPart.add(rushBr)
+            tank.add(frontLightL)
+            tank.add(frontLightR)
+            frontPart.position.z = 6.5
+            tank.add(frontPart)
+            tank.add(backPart)
+            tank.add(topHalf)
+            tank.frontPart = frontPart
+            tank.topHalf = topHalf
+            return tank
+        }
+        let acetank = createTank()
+        acetank.add(tankCamera)
+        // controls.target = tank.position
+        for(let i = 0 ; i< 10 ;i++) {
+            let newTank = createTank()
+            newTank.position.x = 20 * (i+1)
+            objects.push(newTank)
+            scene.add(newTank)
+        }
+        scene.add(acetank)
+        renderer.render(scene,camera)
+        function createPie() {
+            return new THREE.Mesh(
+                new THREE.CylinderGeometry(1.5,1.5,0.5,32),
+                new THREE.MeshBasicMaterial({
+                    map:imgLoader.load('./img/sun.jpeg')
+                })
+            )
+        }
+        function createFrontPart(radius,height) {
+            return new THREE.Mesh(
+                new THREE.ConeGeometry(radius,height,32),
+                new THREE.MeshPhongMaterial({
+                    map: dipanMesh2
+                })
+            )
+        }
+        document.getElementById('btn').onclick = function() {
+            isTankView = !isTankView
+        }
+        function move() {
+            let timer,timer2,timer3,timer4,timer5
+            window.addEventListener('keydown',(e) => {
+                if(e.key === 'w') {
+                    if(timer) {return }
+                    timer = setInterval(()=>{
+                        let rotaion = acetank.rotation.y % (Math.PI * 2)
+                        acetank.position.z += Math.cos(rotaion) * speed
+                        acetank.position.x += Math.sin(rotaion) * speed;
+                        acetank.lunTaiArr.map(item => {
+                            item.rotation.x += 0.2
+                        })
+                    },10)
+                } else if(e.key === 's') {
+                    if(timer2) {return }
+                    timer2 = setInterval(()=>{
+                        let rotaion = acetank.rotation.y % (Math.PI * 2)
+                        acetank.position.z -= Math.cos(rotaion) * speed
+                        acetank.position.x -= Math.sin(rotaion) * speed;
+                        acetank.lunTaiArr.map(item => {
+                            item.rotation.x -= 0.2
+                        })
+                    },10)
+                } else if(e.key === 'a') {
+                    if(timer3) {return }
+                    timer3 = setInterval(()=>{
+                        acetank.rotation.y += 0.01
+                        acetank.lunTaiArr.map((item,index) => {
+                            if(index < 3) {
+                                item.rotation.x -= 0.05
+                            } else {
+                                item.rotation.x += 0.05
+                            }
+                            
+                        })
+                    },10)
+                } else if(e.key === 'd') {
+                    if(timer4) {return }
+                    clearInterval(timer4)
+                    timer4 = setInterval(()=>{
+                        acetank.rotation.y -= 0.01
+                        acetank.lunTaiArr.map((item,index) => {
+                            if(index < 3) {
+                                item.rotation.x += 0.05
+                            } else {
+                                item.rotation.x -= 0.05
+                            }
+                            
+                        })
+                    },10)
+                } else if(e.key === 'e') {
+                    if(isAnimate) {
+                        clearInterval(timer5)
+                        timer5 = null
+                        acetank.frontPart.rotation.z = 0
+                        isAnimate = false
+                    } else {
+                        timer5 = setInterval(() => {
+                            acetank.frontPart.rotation.z += 0.01
+                        },10)
+                        isAnimate = true
+                    }
+                }
+            })
+            window.addEventListener('keyup',(e) => {
+                if(e.key === 'w') {
+                    clearInterval(timer)
+                    timer = null
+                } else if(e.key === 's') {
+                    clearInterval(timer2)
+                    timer2 = null
+                } else if(e.key === 'a') {
+                    clearInterval(timer3)
+                    timer3 = null
+                } else if(e.key === 'd') {
+                    clearInterval(timer4)
+                    timer4 = null
+                }
+            })
+        }
+        move()
+        let tankPosition = new THREE.Vector2()
+        let tankTarget = new THREE.Vector2()
+        let isBig = false
+        let isEnd = false
+        function animate(time) {
+            time *= 0.00005
+            controls.update()
+            // if(isBig) {
+            //     if(acetank.topHalf.rotation.x >= -0.1){
+            //         isBig = false
+            //     }
+            //     acetank.topHalf.rotation.x +=0.005
+            // } else {
+            //     if(acetank.topHalf.rotation.x <= -0.8) {
+            //         isBig = true
+            //     }
+            //     acetank.topHalf.rotation.x -= 0.005
+            // }
+            // if(isEnd) {
+            //     if(acetank.topHalf.rotation.y <= -Math.PI / 2) {
+            //         isEnd = false
+            //     }
+            //     acetank.topHalf.rotation.y -=0.01
+            // } else {
+            //     if(acetank.topHalf.rotation.y >= Math.PI / 2) {
+            //         isEnd = true
+            //     }
+            //     acetank.topHalf.rotation.y +=0.01
+            // }
+            if(acetank.position.x >= 150 || acetank.position.x <= -150 || acetank.position.z >= 150 || acetank.position.z <= -150) {
+                acetank.position.set(0,0,0)
+            }
+            objects.map((item,index) => {
+                curse.getPointAt((time+index*0.1) % 1,tankPosition)
+                curse.getPointAt((time+index*0.1 + 0.01) % 1,tankTarget)
+                item.position.set(tankPosition.x,0,tankPosition.y)
+                item.lookAt(tankTarget.x,0,tankTarget.y)
+                item.topHalf.lookAt(acetank.position.x, 0,acetank.position.z)
+                item.lunTaiArr.map(lunTai => {
+                    lunTai.rotation.x += 0.16
+                })
+            })
+            // acetank.topHalf.lookAt(tankTarget.x,0,tankTarget.y)
+            // acetank.position.set(tankPosition.x,0,tankPosition.y)
+            // acetank.rotation.y= Math.PI / 2
+            acetank.topHalf.lookAt(tankTarget.x,0,tankTarget.y)
+            if(isTankView) {
+                renderer.render(scene,tankCamera)
+            } else {
+                renderer.render(scene,camera)
+            }
+            
+            requestAnimationFrame(animate)
+        }
+        animate(0.01)
+    </script>
+</body>
+</html>

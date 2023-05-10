@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        html,body{
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <script type="module">
+        import * as THREE from './js/three.module.js'
+        import {OrbitControls} from './js/OrbitControls.js'
+        let scene,camera,renderer,controls
+        scene = new THREE.Scene()
+        scene.background = 'transparent'
+        camera = new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight,1,10000)
+        camera.position.set(0,0,500)
+        renderer = new THREE.WebGLRenderer({antialias:true,alpha:true})
+        renderer.setSize(window.innerWidth,window.innerHeight)
+        document.body.appendChild(renderer.domElement)
+        controls = new OrbitControls(camera,renderer.domElement)
+        controls.enablePan = false
+        let loader = new THREE.TextureLoader().setPath('./../img/')
+        let wall1,wall2,wall3,wall4,posY,bgFloor
+        let imgArr = 'posx,negx,posy,negy,posz,negz'.split(','),materialArr=[]
+        for(let i = 0,len = imgArr.length ; i<len ; i++){
+            loader.load(imgArr[i]+'.jpg',texture => {
+                materialArr.push(new THREE.MeshBasicMaterial({map:texture,side:THREE.BackSide}))
+            })
+        }
+        bgFloor = new THREE.Mesh(
+            new THREE.BoxGeometry(5000,5000,5000),
+            materialArr
+        )
+        scene.add(bgFloor)
+        loader.load('bg.png',texture => {
+            wall1 = new THREE.Mesh(
+                new THREE.BoxGeometry(192,108,10),
+                new THREE.MeshBasicMaterial({
+                    // map:texture,
+                    color:0xffff00,
+                    side:THREE.DoubleSide
+                })
+            )
+            posY = wall1.position.y
+            wall1.position.set(192,0,0)
+            scene.add(wall1)
+            wall3 = new THREE.Mesh(
+                new THREE.BoxGeometry(192,108,10),
+                new THREE.MeshBasicMaterial({
+                    // map:texture,
+                    color:0xffff00,
+                    side:THREE.DoubleSide
+                })
+            )
+            wall3.position.set(-192,0,0)
+            scene.add(wall3)
+        })
+        wall2 = new THREE.Mesh(
+            new THREE.BoxBufferGeometry(192,108,10),
+            new THREE.MeshBasicMaterial({
+                color: 0xff0000,
+                side:THREE.DoubleSide
+            })
+        )
+        wall2.position.set(0,108,0)
+        wall4 = new THREE.Mesh(
+            new THREE.BoxBufferGeometry(192,108,10),
+            new THREE.MeshBasicMaterial({
+                // color: 0xff0000,
+                // map:ctxTexture,
+                side:THREE.DoubleSide
+            })
+        )
+        initTextTexture()
+        wall2.position.set(0,-108,0)
+        scene.add(wall2)
+        scene.add(wall4)
+        function initTextTexture() {
+            const box = new THREE.Box3().setFromObject(wall4)
+            let size = box.getSize(new THREE.Vector3())
+            let scale = size.x / size.y
+            let cvs = document.createElement('canvas')
+            cvs.height = cvs.width / scale
+            let ctx = cvs.getContext('2d')
+            ctx.fillRect(0, 0, cvs.width,cvs.height)
+            ctx.beginPath()
+            ctx.font = '30px bold 黑体'
+            ctx.fillStyle = '#ff0000' // 设置图形填充颜色
+            ctx.textBaseline = 'middle'
+            ctx.fillText('测试，哈哈1',0,50)
+            ctx.fillText('测试，哈哈2',0,110)
+            let ctxTexture = new THREE.CanvasTexture(cvs)
+            ctxTexture.needsUpdate = true
+            ctxTexture.wrapS = THREE.RepeatWrapping
+            ctxTexture.wrapT = THREE.RepeatWrapping
+            ctxTexture.repeat.set(1, 1)
+            wall4.material.map = ctxTexture
+            setTimeout(()=>{
+                ctx.fillText('测试，哈哈3',0,130)
+                ctxTexture = new THREE.CanvasTexture(cvs)
+                wall4.material.map = ctxTexture
+            },2000)
+        }
+        let clock = new THREE.Clock()
+        animate()
+        function animate() {
+            let delta = clock.getElapsedTime()
+            controls.update()
+            if(wall1) {
+                let y  = THREE.Math.lerp(-108,108,Math.abs(Math.cos(delta)))
+                wall1.position.y = posY + y
+            }
+            if(wall2) {
+                let y = THREE.Math.lerp(0,108,Math.abs(Math.cos(delta)))
+                wall2.position.y = y
+            }
+            if(wall3) {
+                let y = THREE.Math.lerp(-108,108,Math.abs(Math.cos(delta)))
+                wall3.position.y = y
+            }
+            if(wall4) {
+                let y = THREE.Math.lerp(-108,0,Math.abs(Math.cos(delta)))
+                wall4.position.y = y
+            }
+            renderer.render(scene,camera)
+            requestAnimationFrame(animate)
+        }
+    </script>
+</body>
+</html>

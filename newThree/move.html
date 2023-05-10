@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body{
+            margin: 0;
+            padding: 0;
+        }
+        .btn{
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            width: 100px;
+            height: 40px;
+            line-height: 40px;
+            color: #0099ff;
+            background-color: #404040;
+            text-align: center;
+            transform: translate(-50%);
+        }
+    </style>
+</head>
+<body>
+    <div id="btn" class="btn">切换视角</div>
+    <div id="three"></div>
+    <script type="module">
+        import * as THREE from './js/three.module.js'
+        import {OrbitControls} from './js/OrbitControls.js'
+        let scene,camera,cubeCamera,renderer,controls,isBaseCamera= true
+        scene = new THREE.Scene()
+        camera = new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight)
+        camera.position.set(0,200,50)
+        renderer = new THREE.WebGLRenderer({antialias:true})
+        renderer.setSize(window.innerWidth,window.innerHeight - 5)
+        renderer.setClearColor(0x404040)
+        document.getElementById('three').appendChild(renderer.domElement)
+        controls = new OrbitControls(camera,renderer.domElement)
+        let ground = new THREE.Mesh(
+            new THREE.PlaneGeometry(300,300),
+            new THREE.MeshBasicMaterial({
+                map: new THREE.TextureLoader().load('./img/micai.jpg')
+            })
+        )
+        // ground.y = -0.1
+        ground.rotation.x = -Math.PI / 2
+        scene.add(ground)
+        let cube = new THREE.Mesh(
+            new THREE.BoxGeometry(3,1,2),
+            new THREE.MeshNormalMaterial()
+        )
+        cubeCamera = new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight)
+        cubeCamera.position.set(0,3,-10)
+        cubeCamera.rotation.y = Math.PI;
+        cube.add(cubeCamera)
+        const curve = new THREE.SplineCurve( [
+            new THREE.Vector2( 10,10 ),
+            new THREE.Vector2(0,10),
+            new THREE.Vector2(-10,10),
+            new THREE.Vector2(-10,0),
+            new THREE.Vector2(-10,-10),
+            new THREE.Vector2(0,-10),
+            new THREE.Vector2(10,-10),
+            new THREE.Vector2(10,0),
+            new THREE.Vector2(10,10)
+        ] );
+        const tankPosition = new THREE.Vector2();
+        const tankTarget = new THREE.Vector2();
+        const points = curve.getPoints( 50 );
+        const geometry = new THREE.BufferGeometry().setFromPoints( points );
+        const material = new THREE.LineBasicMaterial( { color : 0xff0000 } );
+        const splineObject = new THREE.Line( geometry, material );
+        splineObject.rotation.x = Math.PI / 2
+        scene.add(splineObject);
+        scene.add(cube)
+        renderer.render(scene,camera)
+        document.getElementById('btn').onclick = function () {
+            isBaseCamera = !isBaseCamera
+        }
+        function animate(time) {
+            time *= 0.001;
+            controls.update()
+            const tankTime = time * .05;
+            curve.getPointAt(tankTime % 1, tankPosition);
+            curve.getPointAt((tankTime + 0.01) % 1, tankTarget);
+            cube.position.set(tankPosition.x, 0.5, tankPosition.y);
+            cube.lookAt(tankTarget.x, 0.5, tankTarget.y);
+            if(isBaseCamera) {
+                renderer.render(scene,camera)
+            } else {
+                renderer.render(scene,cubeCamera)
+            }
+            requestAnimationFrame(animate)
+        }
+        // requestAnimationFrame(animate)
+        animate(1)
+    </script>
+</body>
+</html>

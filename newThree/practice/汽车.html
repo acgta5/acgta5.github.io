@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        html,body{
+            margin: 0;
+            padding: 0;
+        }
+        canvas{
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <script type="module">
+        import * as THREE from './../js/three.module.js'
+        import Stats from './../js/stats.module.js'
+        import {OrbitControls} from './../js/OrbitControls.js'
+        import { GLTFLoader } from './../js/GLTFLoader.js'
+        import { DRACOLoader } from './../js/DRACOLoader.js'
+        import { CarControls } from './../js/CarControls.js'
+        let scene,camera,renderer,stats,controls,carControls = new CarControls(),clock = new THREE.Clock()
+        scene = new THREE.Scene()
+        camera = new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight)
+        camera.position.set(0,5,10)
+        renderer = new THREE.WebGLRenderer({antialias:true})
+        renderer.setSize(window.innerWidth,window.innerHeight)
+        renderer.setClearColor(0xffffff)
+        document.body.appendChild(renderer.domElement)
+        stats = new Stats()
+        document.body.appendChild(stats.domElement)
+        scene.add(new THREE.AmbientLight(0xffffff))
+        // controls = new OrbitControls(camera,renderer.domElement)
+        let ground = new THREE.Mesh(
+            new THREE.PlaneBufferGeometry(100,100),
+            new THREE.MeshBasicMaterial({color:0xffff00})
+        )
+        ground.rotation.x = -Math.PI * 0.5
+        scene.add(ground)
+        let gltfLoader = new GLTFLoader().setPath('./../obj/')
+        let dracoLoader = new DRACOLoader()
+        dracoLoader.setDecoderPath('./../js/gltf/')
+        gltfLoader.setDRACOLoader(dracoLoader)
+        let carModel
+        gltfLoader.load('ferrari.glb', obj => {
+            carModel = obj.scene.children[0]
+            carModel.add(camera)
+            carControls.setModel(carModel)
+            scene.add(carModel)
+        })
+        function animate() {
+            let delta = clock.getDelta()
+            // controls.update()
+            carControls.update(delta)
+            renderer.render(scene,camera)
+            requestAnimationFrame(animate)
+        }
+        animate()
+    </script>
+</body>
+</html>

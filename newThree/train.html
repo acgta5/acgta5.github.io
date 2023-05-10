@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body{
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="three"></div>
+    <script type="module">
+        import * as THREE from './js/three.module.js'
+        import {OrbitControls} from './js/OrbitControls.js'
+        let scene, camera,renderer,controls,trainCubes=[],trainCamera,isCommon=true,trainPosition = new THREE.Vector2(),trainTarget = new THREE.Vector2()
+        scene = new THREE.Scene()
+        camera = new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight)
+        camera.position.set(0,500,40)
+        trainCamera = new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight)
+        renderer = new THREE.WebGLRenderer({antialias:true,alpha:true})
+        renderer.setSize(window.innerWidth,window.innerHeight-5)
+        renderer.setClearColor(0xffffff)
+        document.getElementById('three').appendChild(renderer.domElement)
+        controls = new OrbitControls(camera,renderer.domElement)
+        let imgLoader = new THREE.TextureLoader()
+        let ground = new THREE.Mesh(
+            new THREE.PlaneGeometry(500,500),
+            new THREE.MeshBasicMaterial({
+                map:imgLoader.load('./img/sun.jpeg')
+            })
+        )
+        scene.add(ground)
+        let curve = new THREE.SplineCurve([
+            new THREE.Vector2(0,0),
+            new THREE.Vector2(10,0),
+            new THREE.Vector2(20,2),
+            new THREE.Vector2(30,3),
+            new THREE.Vector2(50,10),
+            new THREE.Vector2(75,20),
+            new THREE.Vector2(100,50),
+            new THREE.Vector2(150,60),
+            new THREE.Vector2(175,75),
+            new THREE.Vector2(200,80),
+            new THREE.Vector2(250,100),
+            new THREE.Vector2(225,110),
+            new THREE.Vector2(200,130),
+            new THREE.Vector2(175,120),
+            new THREE.Vector2(150,150),
+            // new THREE.Vector2(120,180),
+            // new THREE.Vector2(100,200),
+            // new THREE.Vector2(150,220),
+            new THREE.Vector2(120,220),
+            new THREE.Vector2(100,250),
+            new THREE.Vector2(-150,150),
+            new THREE.Vector2(-250,250),
+            new THREE.Vector2(-250,200),
+            new THREE.Vector2(-225,150),
+            new THREE.Vector2(0,0),
+        ])
+        let points = curve.getPoints(200)
+        let tankLine = new THREE.Line(
+            new THREE.BufferGeometry().setFromPoints(points),
+            new THREE.LineBasicMaterial({
+                color:0x0099ff
+            })
+        )
+        tankLine.rotation.x = Math.PI / 2
+        scene.add(tankLine)
+        function createTrainCube() {
+            let cube = new THREE.Mesh(
+                new THREE.BoxGeometry(2,3,5),
+                new THREE.MeshBasicMaterial({
+                    map:imgLoader.load('./img/micai.jpg')
+                })
+            )
+            return cube
+        }
+        let trainObject = new THREE.Object3D()
+        for(let i=0;i<10;i++){
+            let trainCube = createTrainCube()
+            trainCubes.push(trainCube)
+            trainObject.add(trainCube)
+        }
+        scene.add(trainObject)
+        renderer.render(scene,camera)
+        let key = 1
+        function animate(time) {
+            time *= 0.0001
+            controls.update()
+            renderer.render(scene,camera)
+            trainCubes.map((item,index) => {    
+                curve.getPointAt((time+index*0.005) % 1,trainPosition)
+                curve.getPointAt((time + index*0.005 + 0.01) % 1,trainTarget)
+                // if(index % 2 === 0) {
+                    
+                // } else {
+                //     if((1 * key - time + index * 0.1) <= 0){
+                //         key++
+                //     }
+                //     curve.getPointAt((1 *key - time +index*0.1) % 1,trainPosition)
+                //     curve.getPointAt((1 *key - time + index*0.1 + 0.01) % 1,trainTarget)
+                // }
+                item.position.set(trainPosition.x,1.5,trainPosition.y)
+                item.lookAt(trainTarget.x,1.5,trainTarget.y)
+            })
+            
+            requestAnimationFrame(animate)
+        }
+        animate(0.01)
+    </script>
+</body>
+</html>

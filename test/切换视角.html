@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body{
+            margin: 0;
+            padding: 0;
+        }
+        #reset{
+            position: fixed;
+            bottom: 20px;
+            right: 0px;
+            width: 16px;
+            height: 36px;
+            background: #3399ff;
+            cursor: pointer;
+        }
+        .top{
+            position: fixed;
+            top: 10px;
+            left: 50%;
+        }
+    </style>
+    <script src="./../js/three.min.js"></script>
+    <script src="./../js/OrbitControls.js"></script>
+    <script src="./../js/stats.min.js"></script>
+    <script src="./../js/Tween.js"></script>
+</head>
+<body>
+    <div id="three"></div>
+    <div id="reset"></div>
+    <div class="top">
+        <button id="circle">环绕地球</button>
+        <button id="back">复原</button>
+        <a href="./../index.html">返回主页</a>
+    </div>
+    <video src="./../img/bg.mp4" id="video" muted controls loop autoplay style="display: none;"></video>
+</body>
+<script>
+    let scene, camera , renderer , controls , stats ,clock , rayCaster = new THREE.Raycaster()
+    let cubeObject = new THREE.Object3D()
+    cubeObject.position.set(0,0,0)
+    let earth,isRotate = true
+    let pos = new THREE.Vector2()
+    let colorGroup = '0,1,2,3,4,5,6,7,8,9,a,b,c,d,e,f'.split(',')
+    window.onload = function() {
+        function init() {
+            scene = new THREE.Scene()
+            camera = new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight)
+            camera.position.set(0,0,30)
+            renderer = new THREE.WebGLRenderer({antialias:true})
+            renderer.setSize(window.innerWidth,window.innerHeight)
+            // renderer.setClearColor(0xffffff)
+            stats = new Stats(renderer.domElement)
+            controls = new THREE.OrbitControls(camera,renderer.domElement)
+            document.getElementById('three').appendChild(renderer.domElement)
+            document.getElementById('three').appendChild(stats.dom)
+            document.getElementById('reset').addEventListener('click',resetClick)
+            document.getElementById('circle').style.display = 'none'
+            window.addEventListener('click',rayClick)
+            document.getElementById('back').addEventListener('click',function(){
+                isRotate = false
+                document.getElementById('circle').style.display = 'block'
+                document.getElementById('back').style.display = 'none'
+                new TWEEN.Tween(controls.target).to({x:0,y:0,z:0},2000).start()
+                new TWEEN.Tween(camera.position).to({x:0,y:0,z:30},2000).start()
+                new TWEEN.Tween(cubeObject.rotation).to({x:0,y:0,z:0},2000).start()
+                new TWEEN.Tween(scene.getObjectByName('ball1').position).to({x:20,y:0,z:0},2000).start()
+                new TWEEN.Tween(scene.getObjectByName('ball2').position).to({x:36,y:0,z:0},2000).start()
+                new TWEEN.Tween(scene.getObjectByName('ball3').position).to({x:-20,y:0,z:0},2000).start()
+                new TWEEN.Tween(scene.getObjectByName('ball4').position).to({x:-36,y:0,z:0},2000).start()
+                new TWEEN.Tween(scene.getObjectByName('ball2').rotation).to({x:0,y:0,z:0},2000).start()
+                new TWEEN.Tween(scene.getObjectByName('ball4').rotation).to({x:0,y:0,z:0},2000).start()
+            })
+            document.getElementById('circle').addEventListener('click',function() {
+                isRotate = true
+                document.getElementById('circle').style.display = 'none'
+                document.getElementById('back').style.display = 'block'
+                new TWEEN.Tween(controls.target).to({x:0,y:0,z:0},2000).start()
+                new TWEEN.Tween(camera.position).to({x:0,y:0,z:30},2000).start()
+                new TWEEN.Tween(scene.getObjectByName('ball1').position).to({x:20,y:0,z:0},2000).start()
+                new TWEEN.Tween(scene.getObjectByName('ball2').position).to({x:0,y:0,z:20},2000).start()
+                new TWEEN.Tween(scene.getObjectByName('ball3').position).to({x:-20,y:0,z:0},2000).start()
+                new TWEEN.Tween(scene.getObjectByName('ball4').position).to({x:0,y:0,z:-20},2000).start()
+                new TWEEN.Tween(scene.getObjectByName('ball2').rotation).to({x:0,y:Math.PI / 2,z:0},2000).start()
+                new TWEEN.Tween(scene.getObjectByName('ball4').rotation).to({x:0,y:Math.PI / 2,z:0},2000).start()
+            })
+            // controls.enableRotate = false
+            // controls.enablePan = false
+        }
+        function resetClick(e) {
+            new TWEEN.Tween(camera.position).to({x:0,y:0,z:30},1000).start()
+            new TWEEN.Tween(controls.target).to({x:0,y:0,z:0},1000).start()
+            e.stopPropagation();
+        }
+        function rayClick(e) {
+            pos.x = (e.clientX / window.innerWidth) * 2 - 1
+            pos.y = -(e.clientY / window.innerHeight) * 2 + 1
+            rayCaster.setFromCamera(pos,camera)
+            let rayObjects = rayCaster.intersectObjects(scene.children,true)
+            console.log(rayObjects)
+            if(rayObjects.length){
+                let obj = rayObjects[0].object
+                if(!obj.name || !obj.name.includes('ball')){
+                    return false
+                }
+                if(obj.name === 'ballVideo'){
+                    let posY = rayObjects[0].object.position.y
+                    new TWEEN.Tween(camera.position).to({x:0,y:posY,z:5.2},1000).start()
+                    new TWEEN.Tween(controls.target).to({x:0,y:posY,z:0},1000).start()
+                }else{
+                    if(!isRotate){
+                        let posX = rayObjects[0].object.position.x
+                    new TWEEN.Tween(camera.position).to({x:posX,y:0,z:5.12},1000).start()
+                    new TWEEN.Tween(controls.target).to({x:posX,y:0,z:0},1000).start()
+                    }
+                    
+                }
+            }
+        }
+        function randomColor() {
+            let color = '#'
+            for(let i = 0 ; i < 6 ; i++ ){
+                color += colorGroup[Math.floor(Math.random() * 16) % 16]
+            }
+            return color
+        }
+        function main() {
+            let basicBall = new THREE.PlaneGeometry(16,9)
+            let basicBall2 = new THREE.SphereGeometry(1,32,32)
+            let imgLoader = new THREE.TextureLoader()
+            let imgs = []
+            let video = document.getElementById('video')
+            video.play()
+            let videoTexture = new THREE.VideoTexture(video)
+            let videoBox = new THREE.Mesh(
+                new THREE.PlaneGeometry(16,9),
+                new THREE.MeshBasicMaterial({map:videoTexture,side:THREE.DoubleSide})
+            )
+            videoBox.name = 'ballVideo'
+            videoBox.position.set(0,15,0)
+            scene.add(videoBox)
+            imgs[0] = imgLoader.load('./../img/bg.png')
+            imgs[1] = imgLoader.load('./../img/bg2.jpg')
+            imgs[2] = imgLoader.load('./../img/bg3.jpg')
+            imgs[3] = imgLoader.load('./../img/bg4.jpg')
+            for(let  i = 0 ; i<4 ; i++){
+                let mesh = new THREE.MeshBasicMaterial({
+                    map:imgs[i],
+                    side:THREE.DoubleSide
+                })
+                let cube = new THREE.Mesh(basicBall,mesh)
+                cube.name = 'ball' + (i+1)
+                if(i === 0){
+                    cube.position.x = 20
+                    cube.position.y = 0
+                    cube.position.z = 0
+                }else if(i === 1){
+                    cube.position.x = 0
+                    cube.position.y = 0
+                    cube.position.z = 20
+                    cube.rotateY(Math.PI/2)
+                }else if(i === 2){
+                    cube.position.x = -20
+                    cube.position.y = 0
+                    cube.position.z = 0
+                }else{
+                    cube.position.x = 0
+                    cube.position.y = 0
+                    cube.position.z = -20
+                    cube.rotateY(Math.PI/2)
+                }
+                 
+                // cube.rotateX(-Math.PI)
+                cubeObject.add(cube)
+                
+            }
+            scene.add(cubeObject)
+            earth = new THREE.Mesh(
+                new THREE.SphereGeometry(10,32,32),
+                new THREE.MeshPhysicalMaterial({map:imgLoader.load('./../img/earth1.jpg')})
+            )
+            earth.position.set(0,0,0)
+            scene.add(earth)
+            let pointLight = new THREE.DirectionalLight(0xffffff)
+            let amibientLight = new THREE.AmbientLight(0x333333)
+            pointLight.position.set(-10,0,5)
+            scene.add(pointLight)
+            scene.add(amibientLight)
+            // for(let i = 0 ; i < 100 ; i++){
+            //     let cube = new THREE.Mesh(
+            //         basicBall2,
+            //         new THREE.MeshBasicMaterial({color:randomColor()})
+            //     )
+            //     cube.position.x = 200 - Math.floor(Math.random() * 400)
+            //     cube.position.y = 100 - Math.floor(Math.random() * 200)
+            //     cube.position.z = -200 + Math.floor(Math.random() * -100)
+            //     cubeObject.add(cube)
+            // }
+            // scene.add(cubeObject)
+        }
+        function animate() {
+            TWEEN.update()
+            stats.update()
+            controls.update()
+            earth.rotation.y+= 0.005
+            if(isRotate){
+                cubeObject.rotateY(0.005)
+            }
+            requestAnimationFrame(animate)
+            renderer.render(scene,camera)
+        }
+        init()
+        main()
+        animate()
+    }
+</script>
+</html>

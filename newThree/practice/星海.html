@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>星海</title>
+    <style>
+        html,body{
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <script type="module">
+        import * as THREE from './../js/three.module.js'
+        import Stats from './../js/stats.module.js'
+        import {GLTFLoader} from './../js/GLTFLoader.js'
+        import {OrbitControls} from './../js/OrbitControls.js'
+        let scene,camera,renderer,arrList = [],stats,cloudArr = [],loader,gltfLoader,clock,controls
+        scene = new THREE.Scene()
+        camera = new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight)
+        camera.position.set(0,0,996)
+        renderer = new THREE.WebGLRenderer({
+            antialias:true
+        })
+        renderer.setSize(window.innerWidth,window.innerHeight - 4)
+        // renderer.setClearColor(0xffffff)
+        document.body.appendChild(renderer.domElement)
+        stats = new Stats()
+        controls = new OrbitControls(camera,renderer.domElement)
+        document.body.appendChild(stats.domElement)
+        let ambientLight = new THREE.AmbientLight(0xffffff)
+        scene.add(ambientLight)
+        let pointLight = new THREE.DirectionalLight(0xffffff)
+        pointLight.position.set(0,0,400)
+        scene.add(pointLight)
+        loader = new THREE.TextureLoader().setPath('./../img/')
+        let starGeo = new THREE.SphereBufferGeometry(1,32,16)
+        let starMat = new THREE.MeshBasicMaterial({color:0xffffff})
+        for(let i = 0 ; i< 500 ; i++){
+            let mesh = new THREE.Mesh(starGeo,starMat)
+            mesh.position.set(
+                (i % 2 === 0 ? 1 : -1)  *(1000 - Math.random() * 400),
+                Math.random() * 1200 - 600,
+                Math.random() * 2000 - 1000
+            )
+            scene.add(mesh)
+            arrList.push(mesh)
+        }
+        gltfLoader = new GLTFLoader()
+        let gltf
+        gltfLoader.load('./../obj/UFO_Empty_2.glb',obj => {
+            clock = new THREE.Clock()
+            gltf = obj.scene
+            gltf.position.set(0,0,909)
+            gltf.scale.set(10,10,10)
+            scene.add(gltf)
+            animate()
+        })
+        function animate() {
+            let delta = clock.getElapsedTime()
+            controls.update()
+            stats.update()
+            gltf.position.set(
+                Math.cos(delta) * 10,
+                Math.sin(delta) * 10,
+                909
+            )
+            arrList.forEach(m => {
+                if(m.position.z > 1000) m.position.z = -1000
+                m.position.z += 50  
+            })
+            renderer.render(scene,camera)
+            requestAnimationFrame(animate)
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="./../js/three.min.js"></script>
+    <script src="./../js/stats.min.js"></script>
+    <script src="./../js/OrbitControls.js"></script>
+    <script src="./../js/FirstPersonControls.js"></script>
+    <style>
+        body{
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <div style="position: fixed;top: 0;left: 50%;">
+        <a href="./../index.html">返回主页</a>
+    </div>
+    <div id="three"></div>
+</body>
+<script>
+    window.onload = function() {
+        let scene, camera , renderer, controls , stats 
+        let colorNum = '0,1,2,3,4,5,6,7,8,9,a,b,c,d,e,f'.split(',')
+        scene = new THREE.Scene()
+        camera = new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight)
+        renderer = new THREE.WebGLRenderer()
+        // renderer.setClearColor(0xffffff)
+        renderer.setSize(window.innerWidth,window.innerHeight)
+        camera.position.set(0,0,50)
+        // camera.lookAt(0,0,0)
+        stats = new Stats(renderer.domElement)
+        document.getElementById('three').appendChild(stats.dom)
+        document.getElementById('three').appendChild(renderer.domElement)
+        // controls = new THREE.OrbitControls(camera,renderer.domElement)
+        controls = new THREE.FirstPersonControls(camera,renderer.domElement)
+        controls.enabled = true
+        controls.lookSpeed = 0.1
+        controls.movementSpeed = 20
+        // controls.autoForward = true
+        // controls.enablePan = false
+        // controls.autoRotate = true
+        
+        
+        let imgLoader = new THREE.TextureLoader()
+        let earth1 = imgLoader.load('../img/earth1.jpg')
+        let earth2 = imgLoader.load('../img/earth2.jpg')
+        let earth3 = imgLoader.load('../img/earth3.png')
+        let sunMaterial = imgLoader.load('../img/sun.jpeg')
+        let cube = new THREE.Mesh(
+            new THREE.SphereGeometry(1,32,32),
+            new THREE.MeshPhysicalMaterial({map:earth3})
+        )
+        cube.position.z = 30
+        scene.add(cube)
+        let ball = new THREE.Mesh(new THREE.SphereGeometry(1,32,32),new THREE.MeshPhysicalMaterial({map:earth1}))
+        ball.position.x = 30
+        scene.add(ball)
+        let ground = new THREE.Mesh(new THREE.SphereGeometry(1,32,32),new THREE.MeshPhysicalMaterial({map:earth2}))
+        ground.position.x = -30
+        scene.add(ground)
+        let sun = new THREE.Mesh(new THREE.SphereGeometry(10,32,32),new THREE.MeshBasicMaterial({map:sunMaterial}))
+        // sun.position.x = 100
+        scene.add(sun)
+        let rotationBox = new THREE.Object3D()
+        rotationBox.add(ball)
+        rotationBox.add(ground)
+        rotationBox.add(cube)
+        scene.add(rotationBox)
+        let pointLight = new THREE.PointLight(0xffffff)
+        scene.add(pointLight)
+        let circleGeometry = new THREE.SphereGeometry(1,32,32)
+        for(let i = 0 ; i < 5000 ; i++){
+            let cube = new THREE.Mesh(circleGeometry,new THREE.MeshBasicMaterial({color:randomColor()}))
+            cube.position.x = 2000 - Math.floor(Math.random()*4000)
+            cube.position.y = 2000 - Math.floor(Math.random()*4000)
+            cube.position.z = 2000 - Math.floor(Math.random()*4000)
+            scene.add(cube)
+        }
+        let directionLight = new THREE.DirectionalLight(0xffffff)
+        directionLight.position.set(1,0,1)
+        scene.add(directionLight)
+        function randomColor() {
+            let color = '#'
+            for(let i = 0 ; i < 6 ; i++ ){
+                color += colorNum[Math.floor(Math.random()*16)%16]
+            }
+            return color
+        }
+        var clock  = new THREE.Clock()
+        console.log(scene)
+        function animate() {
+            stats.update()
+            controls.update(clock.getDelta())
+            rotationBox.rotation.y -= 0.01
+            sun.rotation.y -= 0.001
+            cube.rotation.y -= 0.02
+            ball.rotation.y -= 0.02
+            ground.rotation.y -= 0.02
+            requestAnimationFrame(animate)
+            renderer.render(scene,camera)
+        }
+        animate()
+    }
+</script>
+</html>

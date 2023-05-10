@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body{
+            margin: 0;
+            padding: 0;
+        }
+        #three{
+            height: 100vh;
+        }
+    </style>
+</head>
+<body>
+    <div id="three"></div>
+    <script type="module">
+        import * as THREE from './../js/three.module.js'
+        import {OrbitControls} from './../js/OrbitControls.js'
+        let scene,camera,renderer,controls,imgLoader = new THREE.TextureLoader(),cube
+        function init() {
+            scene = new THREE.Scene()
+            camera = new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight)
+            camera.position.set(0,20,20)
+            renderer = new THREE.WebGLRenderer({antialias:true})
+            renderer.setSize(window.innerWidth,window.innerHeight)
+            renderer.shadowMap.enabled = true
+            document.getElementById('three').appendChild(renderer.domElement)
+            controls = new OrbitControls(camera,renderer.domElement)
+            controls.MaxPolarAngle = Math.PI / 2
+            let ambientLight = new THREE.AmbientLight(0x404040)
+            scene.add(ambientLight)
+            let pointLight = new THREE.PointLight(0xffffff,0.8)
+            let pointLight2 = new THREE.PointLight(0xffffff,0.8)
+            pointLight.castShadow = true
+            pointLight2.castShadow = true
+            pointLight.position.set(-20,20,20)
+            pointLight2.position.set(20,20,-20)
+            scene.add(pointLight)
+            // scene.add(pointLight2)
+        }
+        function main() {
+            let bgTexture = imgLoader.load('./../img/checker.png')
+            bgTexture.wrapS = THREE.RepeatWrapping
+            bgTexture.wrapT = THREE.RepeatWrapping
+            bgTexture.magFilter = THREE.NearestFilter
+            bgTexture.repeat.set(10,10)
+            let ground = new THREE.Mesh(
+                new THREE.PlaneGeometry(50,50),
+                new THREE.MeshPhongMaterial({
+                    map:bgTexture,
+                    side:THREE.DoubleSide,
+                    // color:new THREE.Color(1.5,1.5,1.5)
+                })
+            )
+            let wall = new THREE.Mesh(
+                new THREE.BoxGeometry(50,50,50),
+                new THREE.MeshPhongMaterial({
+                    side:THREE.BackSide,
+                    color:0x333333
+                })
+            )
+            wall.receiveShadow = true
+            wall.castShadow = true
+            wall.position.y = 25 - 0.1
+            scene.add(wall)
+            ground.rotation.x = -0.5 * Math.PI
+            ground.receiveShadow = true
+            scene.add(ground)
+            cube = new THREE.Mesh(
+                new THREE.SphereGeometry(2,32,16),
+                new THREE.MeshPhongMaterial({color:0xff0})
+            )
+            cube.receiveShadow = true
+            cube.castShadow = true
+            cube.position.set(2,2,2)
+            scene.add(cube)
+            renderer.render(scene,camera)
+        }
+        function animate(time) {
+            time *= 0.001
+            requestAnimationFrame(animate)
+            let speed = time * 0.2
+            let radius = Math.sin(speed) * 10
+            let angle = speed+ Math.PI * 2 /15
+            let yOff = Math.abs(Math.cos(time * 2))
+            cube.position.set(Math.cos(angle) * radius,THREE.Math.lerp(1,10,yOff),Math.sin(angle) * radius)
+            controls.update()
+            camera.lookAt(cube.position)
+            renderer.render(scene,camera)
+        }
+        init()
+        main()
+        requestAnimationFrame(animate)
+    </script>
+</body>
+</html>

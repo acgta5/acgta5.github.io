@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        html,body{
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="three"></div>
+    <script type="module">
+        import * as THREE from './js/three.module.js'
+        import {OrbitControls} from './js/OrbitControls.js'
+        let scene,camera, renderer,sun,controls,imgLoader
+        scene = new THREE.Scene()
+        camera = new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight)
+        camera.position.set(0,0,50)
+        renderer = new THREE.WebGLRenderer({antialias:true})
+        renderer.setSize(window.innerWidth,window.innerHeight - 20)
+        controls = new OrbitControls(camera,renderer.domElement)
+        document.getElementById('three').appendChild(renderer.domElement)
+        imgLoader = new THREE.TextureLoader()
+        let light = new THREE.DirectionalLight(0xffffff)
+        light.position.set(0,0,1)
+        let Object3D = new THREE.Object3D()
+        scene.add(light)
+        sun = new THREE.Mesh(
+            createBox(10),
+            new THREE.MeshBasicMaterial({
+                map:imgLoader.load('./img/sun.jpeg')
+            })
+        )
+        function createBox(x) {
+            return new THREE.SphereGeometry(x,30,30)
+        }
+        let sunObject = new THREE.Object3D()
+        Object3D.add(sun)
+        Object3D.add(sunObject)
+        let earth = new THREE.Mesh(
+            createBox(2),
+            new THREE.MeshBasicMaterial({
+                map:imgLoader.load('./img/earth2.jpg')
+            })
+        )
+        sunObject.add(earth)
+        sunObject.position.z = -20
+        let moonObject = new THREE.Object3D()
+        sunObject.add(moonObject)
+        let moon = new THREE.Mesh(
+            createBox(0.5),
+            new THREE.MeshBasicMaterial({
+                map:imgLoader.load('./img/moon1.jpg')
+            })
+        )
+        moonObject.position.z = -5
+        moonObject.add(moon)
+        scene.add(Object3D)
+        renderer.render(scene,camera)
+        function animate() {
+            requestAnimationFrame(animate)
+            Object3D.rotation.y += 0.003
+            sunObject.rotation.y += 0.1
+            moonObject.rotation.y += 0.01
+            renderer.render(scene,camera)
+            controls.update()
+        }
+        animate()
+    </script>
+</body>
+</html>

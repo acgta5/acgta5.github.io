@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        html,body{
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <script type="module">
+        import * as THREE from './js/three.module.js'
+        import {OrbitControls} from './js/OrbitControls.js'
+        let scene,camera,renderer,clock,controls
+        scene = new THREE.Scene()
+        camera = new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight,1,10000)
+        camera.position.set(0,0,50)
+        renderer = new THREE.WebGLRenderer({antialias:true,alpha:true})
+        renderer.setSize(window.innerWidth,window.innerHeight)
+        document.body.appendChild(renderer.domElement)
+        controls = new OrbitControls(camera,renderer.domElement)
+        let loader = new THREE.TextureLoader().setPath('./img/')
+        clock = new THREE.Clock()
+        let gunGuan,mainBody,gunTail1,gunTail2,gunTail3
+        loader.load('micai3.jpg',texture => {
+            //枪管
+            let geo = new THREE.CylinderBufferGeometry(0.1,0.1,20,32,undefined,true)
+            let mat = new THREE.MeshBasicMaterial({
+                map:texture,
+                side:THREE.DoubleSide
+            })
+            gunGuan = new THREE.Mesh(geo,mat)
+            gunGuan.rotation.z = Math.PI / 2
+            gunGuan.position.set(-20,0,0)
+            scene.add(gunGuan)
+            //主体
+            mainBody = new THREE.Mesh(
+                new THREE.CylinderBufferGeometry(0.5,0.5,20,8,),
+                new THREE.MeshBasicMaterial({
+                    map:texture
+                })
+            )
+            mainBody.rotation.z = Math.PI / 2
+            scene.add(mainBody)
+            gunTail1 = new THREE.Mesh(
+                new THREE.SphereBufferGeometry(1,32,16),
+                new THREE.MeshBasicMaterial({
+                    map:texture
+                })
+            )
+            gunTail1.position.set(10,0,0)
+            scene.add(gunTail1)
+            gunTail2 = new THREE.Mesh(
+                new THREE.CylinderBufferGeometry(0.5,1,5,8),
+                new THREE.MeshBasicMaterial({
+                    map:texture
+                })
+            )
+            gunTail2.rotation.z = Math.PI / 2
+            gunTail2.position.set(13.5,0,0)
+            scene.add(gunTail2)
+            gunTail3 = new THREE.Mesh(
+                new THREE.SphereBufferGeometry(1,32,16),
+                new THREE.MeshBasicMaterial({
+                    map:texture
+                })
+            )
+            gunTail3.position.set(18.5,0,0)
+            scene.add(gunTail3)
+            animate()
+        })
+        function animate() {
+            let delta = clock.getElapsedTime()
+            // if(gunGuan) {
+            //     let moveOff = THREE.Math.lerp(0,15,Math.abs(Math.cos(delta * 2)))
+            //     gunGuan.position.x = - 20 + moveOff
+            // }
+            // controls.update()
+            renderer.render(scene,camera)
+            requestAnimationFrame(animate)
+        }
+    </script>
+</body>
+</html>

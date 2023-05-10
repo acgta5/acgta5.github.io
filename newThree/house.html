@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        html,body{
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <script type='module'>
+        import * as THREE from './js/three.module.js'
+        import {OrbitControls} from './js/OrbitControls.js'
+        import {GLTFLoader} from './js/GLTFLoader.js'
+        import {DRACOLoader} from './js/DRACOLoader.js'
+        let scene,camera,renderer,clock,mixer,controls,envMap
+        scene = new THREE.Scene()
+        camera = new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight,1,100)
+        camera.position.set(0,0,8)
+        renderer = new THREE.WebGLRenderer({antialias:true})
+        renderer.setSize(window.innerWidth,window.innerHeight)
+        renderer.gammaOutput = true
+        renderer.gammaFactor = 2
+        renderer.setClearColor(0xffffff)
+        let sceneLight = new THREE.AmbientLight(0xffffff)
+        scene.add(sceneLight)
+        let pointLight1 = new THREE.PointLight(0xffffff)
+        pointLight1.position.copy(camera.position)
+        scene.add(pointLight1)
+        document.body.appendChild(renderer.domElement)
+        controls = new OrbitControls(camera,renderer.domElement)
+        controls.maxPolarAngle = Math.PI / 2
+        envMap = new THREE.CubeTextureLoader().setPath('./img/').load([
+            'negx.jpg','posx.jpg',
+            'negy.jpg','posy.jpg',
+            'negz.jpg','posz.jpg'
+        ])
+        let gltfLoader = new GLTFLoader()
+        let dracoLoader = new DRACOLoader()
+        dracoLoader.setDecoderPath('./js/gltf/')
+        gltfLoader.setDRACOLoader(dracoLoader)
+        gltfLoader.load('./obj/LittlestTokyo.glb',obj => {
+            let model = obj.scene
+            model.scale.set(0.01,0.01,0.01)
+            model.traverse(child => {
+                if(child.isMesh){
+                    child.material.envMap = envMap
+                }
+            })
+            scene.add(model)
+            mixer = new THREE.AnimationMixer(model)
+            mixer.clipAction(obj.animations[0]).play()
+            clock = new THREE.Clock()
+            animate()
+        })
+        function animate() {
+            let delta = clock.getDelta()
+            controls.update()
+            mixer.update(delta)
+            renderer.render(scene,camera)
+            requestAnimationFrame(animate)
+        }
+    </script>
+</body>
+</html>

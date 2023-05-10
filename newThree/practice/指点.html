@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        html,body{
+            margin: 0;
+            padding: 0;
+        }
+        canvas{
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <script type="module">
+        import * as THREE from './../js/three.module.js'
+        import {OrbitControls} from './../js/OrbitControls.js'
+        import Stats from './../js/stats.module.js'
+        let scene,camera,renderer,controls,stats,raycaster = new THREE.Raycaster(),point = new THREE.Vector2()
+        scene = new THREE.Scene()
+        camera = new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight)
+        camera.position.set(0,0,10)
+        renderer = new THREE.WebGLRenderer({antialias:true})
+        renderer.setSize(window.innerWidth,window.innerHeight)
+        renderer.setClearColor(0xffffff)
+        document.body.appendChild(renderer.domElement)
+        stats = new Stats()
+        document.body.appendChild(stats.domElement)
+        controls = new OrbitControls(camera,renderer.domElement)
+        controls.maxPolarAngle = Math.PI / 2
+        let imgLoader = new THREE.TextureLoader().setPath('./../img/')
+        let img1Texture = imgLoader.load('bg.png')
+        let img2Texture = imgLoader.load('sun.jpeg')
+        let img3Texture = imgLoader.load('earth2.jpg')
+        let ballGeo = new THREE.SphereBufferGeometry(1,32,16)
+        for(let i = 0;i<10;i++){
+            let mesh = new THREE.Mesh(
+                ballGeo,
+                new THREE.MeshBasicMaterial({map:img2Texture})
+            )
+            mesh.position.set(
+                Math.random() * 20 - 10,
+                Math.random() * 8 - 4,
+                Math.random() * 16  - 10
+            )
+            mesh.matType = 1
+            scene.add(mesh)
+        }
+        animate()
+        let showPlane = new THREE.Mesh(
+            new THREE.PlaneBufferGeometry(4,2.3),
+            new THREE.MeshBasicMaterial({map:img1Texture})
+        )
+        showPlane.visible = false
+        scene.add(showPlane)
+        document.addEventListener('click',handleClick)
+        document.addEventListener('mousemove',handleMouseMove)
+        function handleClick(e) {
+            point.x = (e.clientX / window.innerWidth) * 2 - 1
+            point.y = -(e.clientY / window.innerHeight) * 2 + 1
+            raycaster.setFromCamera(point,camera)
+            let objects = raycaster.intersectObjects(scene.children)
+            if(objects.length) {
+                console.log(objects[0])
+                if(objects[0].object.matType === 1){
+                    objects[0].object.material.map = img3Texture
+                    objects[0].object.matType = 2
+                } else {
+                    objects[0].object.material.map = img2Texture
+                    objects[0].object.matType = 1
+                }
+                
+                
+            }
+        }
+        function handleMouseMove(e) {
+            point.x = (e.clientX / window.innerWidth) * 2 - 1
+            point.y = -(e.clientY / window.innerHeight) * 2 + 1
+            raycaster.setFromCamera(point,camera)
+            let objects = raycaster.intersectObjects(scene.children)
+            if(objects.length) {
+                showPlane.visible = true
+                let {x,y,z} = objects[0].object.position
+                showPlane.position.set(
+                    x,y + 3,z
+                )
+                showPlane.lookAt(camera.position)
+            } else {
+                showPlane.visible = false
+            }
+        }
+        function animate() {
+            controls.update()
+            stats.update()
+            renderer.render(scene,camera)
+            requestAnimationFrame(animate)
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        html,body{
+            margin: 0;
+            padding: 0;
+        }
+        canvas{
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <script type="module">
+        import * as THREE from './../js/three.module.js'
+        // import {OrbitControls} from './../js/OrbitControls.js'
+        import {FirstPersonControls} from './../js/FirstPersonControls.js'
+        import Stats from './../js/stats.module.js'
+        let scene,camera,renderer,controls,stats
+        scene = new THREE.Scene()
+        camera = new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight)
+        camera.position.set(0,0,1)
+        renderer = new THREE.WebGLRenderer({antialias:true})
+        renderer.setSize(window.innerWidth,window.innerHeight)
+        renderer.setClearColor(0xffffff)
+        document.body.appendChild(renderer.domElement)
+        controls = new FirstPersonControls(camera,renderer.domElement)
+        controls.lookSpeed = 0.05
+        stats = new Stats()
+        document.body.appendChild(stats.domElement)
+        let imgLoader = new THREE.TextureLoader().setPath('./../img/')
+        let matArr = [],imgArr = 'posx,negx,posy,negy,posz,negz'.split(',')
+        for(let i = 0 ; i< 6 ; i++){
+            imgLoader.load(imgArr[i]+'.jpg',texture => {
+                matArr[i]= new THREE.MeshBasicMaterial({
+                    map:texture,
+                    side:THREE.BackSide
+                })
+            })
+        }
+        let skyBox = new THREE.Mesh(
+            new THREE.BoxBufferGeometry(200,200,200),
+            matArr
+        )
+        let clock = new THREE.Clock()
+        scene.add(skyBox)
+        function animate() {
+            let delta = clock.getDelta()
+            controls.update(delta)
+            stats.update()
+            renderer.render(scene,camera)
+            requestAnimationFrame(animate)
+        }
+        animate()
+        
+    </script>
+</body>
+</html>

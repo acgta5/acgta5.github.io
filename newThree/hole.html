@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        html,body{
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <script type="module">
+        import * as THREE from './js/three.module.js'
+        let scene,camera,renderer,sceneLight,flashLight,clock,thingArr=[],smokeArr = []
+        scene = new THREE.Scene()
+        camera = new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight)
+        camera.position.set(0,0,1000)
+        renderer = new THREE.WebGLRenderer()
+        renderer.setSize(window.innerWidth,window.innerHeight)
+        document.body.appendChild(renderer.domElement)
+        sceneLight = new THREE.AmbientLight(0xffffff)
+        scene.add(sceneLight)
+        flashLight = new THREE.PointLight(0xff0000)
+        flashLight.position.set(0,0,400)
+        scene.add(flashLight)
+        let loader = new THREE.TextureLoader()
+        loader.load('./img/smoke.png',texture => {
+            let geo = new THREE.PlaneBufferGeometry(350,350)
+            let mat = new THREE.MeshStandardMaterial({
+                map:texture,
+                transparent:true
+            })
+            for(let i = 880; i> 250;i--){
+                let mesh = new THREE.Mesh(geo,mat)
+                mesh.position.set(
+                    0.5 * i * Math.cos(4 * i * Math.PI / 180),
+                    0.5 * i * Math.sin(4 * i * Math.PI / 180),
+                    0.1 * i 
+                )
+                mesh.rotation.z = Math.random() * 360
+                thingArr.push(mesh)
+                scene.add(mesh)
+            }
+            animate()
+        })
+        function animate() {
+            thingArr.forEach(item => {
+                item.rotation.z -= 0.02
+            })
+            if(Math.random() > 0.9) {
+                flashLight.power = Math.random() * 50 + 20
+            }
+            renderer.render(scene,camera)
+            requestAnimationFrame(animate)
+        }
+        
+    </script>
+</body>
+</html>

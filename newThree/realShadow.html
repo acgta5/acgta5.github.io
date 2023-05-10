@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body{
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="three"></div>
+    <script type="module">
+        import * as THREE from './js/three.module.js'
+        import {OrbitControls} from './js/OrbitControls.js'
+        let scene,camera,renderer,controls,imgLoader = new THREE.TextureLoader(),objectList= []
+        function init() {
+            scene = new THREE.Scene()
+            camera = new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight)
+            camera.position.set(0,5,5)
+            camera.lookAt(0,0,0)
+            renderer = new THREE.WebGLRenderer({antialias:true})
+            renderer.setSize(window.innerWidth,window.innerHeight - 5)
+            renderer.setClearColor(0xffffff)
+            renderer.shadowMap.enabled = true
+            document.getElementById('three').appendChild(renderer.domElement)
+            controls = new OrbitControls(camera,renderer.domElement)
+            let direcLight = new THREE.PointLight(0xffffff)
+            direcLight.position.set(0,10,10)
+            direcLight.castShadow = true
+            let ambientLight = new THREE.AmbientLight(0x494040)
+            scene.add(direcLight)
+            // scene.add(ambientLight)
+        }
+        function main() {
+            let bgTexture = imgLoader.load('./img/checker.png')
+            bgTexture.wrapS = THREE.RepeatWrapping
+            bgTexture.wrapT = THREE.RepeatWrapping
+            bgTexture.magFilter = THREE.NearestFilter
+            bgTexture.repeat.set(20,20)
+            let ground = new THREE.Mesh(
+                new THREE.PlaneGeometry(40,40),
+                new THREE.MeshPhongMaterial({
+                    map:bgTexture,
+                    side:THREE.DoubleSide,
+                    // color:new THREE.Color(1.5,1.5,1.5)
+                })
+            )
+            ground.receiveShadow = true
+            ground.rotation.x = -Math.PI / 2
+            scene.add(ground)
+            let wall = new THREE.Mesh(
+                new THREE.BoxGeometry(40,40,40),
+                new THREE.MeshPhongMaterial({
+                    color:0xffffff,
+                    side:THREE.BackSide
+                })
+            )
+            wall.position.y = 20-0.01
+            wall.castShadow = true
+            wall.receiveShadow = true
+            scene.add(wall)
+            let cube = new THREE.Mesh(
+                new THREE.BoxGeometry(1,1,1),
+                new THREE.MeshPhongMaterial({color:0xff0000})
+            )
+            cube.position.set(0,1,0)
+            cube.castShadow = true
+            cube.receiveShadow = true
+            let ball = new THREE.Mesh(
+                new THREE.SphereGeometry(5,32,16),
+                new THREE.MeshPhongMaterial({color:0xffff00})
+            )
+            ball.castShadow = true
+            ball.receiveShadow = true
+            ball.position.set(0,20,3)
+            scene.add(ball)
+            scene.add(cube)
+        }
+        function animate() {
+            requestAnimationFrame(animate)
+            controls.update()
+            renderer.render(scene,camera)
+        }
+        init()
+        main()
+        animate()
+    </script>
+</body>
+</html>

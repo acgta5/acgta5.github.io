@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        html,body{
+            margin:0;
+            padding: 0;
+        }
+    </style>
+    <script src="./../js/three.min.js"></script>
+    <script src="./../js/OrbitControls.js"></script>
+    <script src="./../js/stats.min.js"></script>
+    <script src="./../js/Tween.js"></script>
+</head>
+<body>
+    <div id="three">
+
+    </div>
+    <script>
+        var scene, camera, controls , renderer , stats,imgLoader,imgList = [];
+        window.onload = function() {
+            function init() {
+                scene =  new THREE.Scene()
+                camera =  new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight)
+                camera.position.set(0,0,500)
+                renderer = new THREE.WebGLRenderer({antialias:true})
+                renderer.setClearColor(0xffffff)
+                renderer.setSize(window.innerWidth,window.innerHeight)
+                stats = new Stats(renderer.domElement)
+                controls = new THREE.OrbitControls(camera,renderer.domElement)
+                document.getElementById('three').appendChild(renderer.domElement)
+                document.getElementById('three').appendChild(stats.dom)
+                imgLoader = new THREE.TextureLoader()
+                // controls.enabled = false
+            }
+            function main() {
+                let cube = new THREE.PlaneGeometry(9,16)
+                for(let i = 0 ;i < 11 ; i++){
+                    imgList[i] = imgLoader.load("./../img/"+ (i+1)+'.jpg')
+                    let mesh = new THREE.MeshBasicMaterial({
+                        map: imgList[i],
+                        side: THREE.DoubleSide
+                    })
+                    let box = new THREE.Mesh(cube,mesh)
+                    if(i<=2) {
+                        box.position.set(0,0,(i+1)* 100)
+                    }else if(i <= 5) {
+                        box.position.set((i-2)*100,0,400)
+                        box.rotateY(-Math.PI/2)
+                    } else if(i <=8) {
+                        box.position.set(400,0,(9-i)*100)
+                    } else {
+                        box.position.set((10-i)*100+150,0,0)
+                        box.rotateY(Math.PI/2)
+                    }
+                    scene.add(box)
+                }
+            }
+            init()
+            main()
+            animate()
+            new TWEEN.Tween(camera.position).to({x:0,y:0,z:0},5000).start()
+            new TWEEN.Tween(controls.target).to({x:0,y:0,z:0},5000).start()
+            setTimeout(()=>{
+                new TWEEN.Tween(camera.position).to({x:400,y:0,z:0},5000).start()
+                new TWEEN.Tween(controls.target).to({x:400,y:0,z:0},5000).start()
+            }, 5 * 1000)
+            
+            setTimeout(()=>{
+                new TWEEN.Tween(camera.position).to({x:400,y:0,z:400},5000).start()
+                new TWEEN.Tween(controls.target).to({x:400,y:0,z:400},5000).start()
+            }, 10 * 1000)
+            setTimeout(()=>{
+                new TWEEN.Tween(camera.position).to({x:0,y:0,z:400},5000).start()
+                new TWEEN.Tween(controls.target).to({x:0,y:0,z:400},5000).start()
+            }, 15 * 1000)
+            function animate(){
+                TWEEN.update()
+                stats.update()
+                controls.update()
+                requestAnimationFrame(animate)
+                renderer.render(scene,camera)
+            }
+        }
+    </script>
+</body>
+</html>

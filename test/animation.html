@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body{
+            margin: 0;
+            padding: 0;
+        }
+        .main{
+            width: 660px;
+            margin: 30px auto;
+        }
+        .main > .content{
+            float: left;
+            width: 200px;
+            height: 100px;
+            overflow: hidden;
+            margin: 10px;
+            position: relative;
+            cursor: pointer;
+        }
+        .animate{
+            position: absolute;
+            width: 200px;
+            background: rgba(0, 0, 0, 0.5);
+            height: 100px;
+            line-height: 100px;
+            color: #ffffff;
+            top:-100px;
+            text-align: center;
+            transition: top 0.5s;
+            left: 0px;
+        }
+        .basicDiv{
+            position: absolute;
+            left: -100px;
+            top: 0px;
+            border: 50px solid #3399ff;
+            border-color: #3399ff transparent transparent transparent;
+            width: 0;
+            height: 0;
+            opacity: 0.5;
+        }
+        .main .content:hover .animate{
+            top:0px;
+            /* transition: top 1s; */
+            /* animation: fromTopToDown 1s; */
+        }
+        .leftT{
+            transform: rotate(-45deg);
+        }
+        .leftB{
+            transform: rotate(-45deg);
+        }
+        .rightT{
+            transform: rotate(-45deg);
+        }
+        .rightB{
+            transform: rotate(-45deg);
+        }
+        .main .content:hover .leftT{
+            animation: ltTR 1s;
+        }
+        .main .content:hover .leftB{
+            animation: lbTR 1s;
+        }
+        .main .content:hover .rightT{
+            animation: rtTL 1s;
+        }
+        .main .content:hover .rightB{
+            animation: rbTL 1s;
+        }
+        @keyframes ltTR{
+            0% {
+                top: 0px;
+                left: -100px;
+            }
+            50%{
+                top: 0px;
+                left: 0px;
+            }
+            100%{
+                top: 0px;
+                left: -100px;
+            }
+        }
+        @keyframes lbTR {
+            0% {
+                top: 50px;
+                left: -100px;
+            }
+            50%{
+                top: 50px;
+                left: 0px;
+            }
+            100%{
+                top: 50px;
+                left: -100px;
+            }
+        }
+        @keyframes rtTL {
+            0% {
+                top: 0px;
+                left: 200px;
+            }
+            50%{
+                top: 0px;
+                left: 100px;
+            }
+            100%{
+                top: 0px;
+                left: 200px;
+            }
+        }
+        @keyframes rbTL {
+            0% {
+                top: 50px;
+                left: 200px;
+            }
+            50%{
+                top: 50px;
+                left: 100px;
+            }
+            100%{
+                top: 50px;
+                left: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main">
+        <div class="content">
+            <div class="animate">世界地图1</div>
+            <div class="basicDiv leftT"></div>
+            <div class="basicDiv rightT"></div>
+            <div class="basicDiv leftB"></div>
+            <div class="basicDiv rightB"></div>
+            <img src="./../img/earth1.jpg" alt="" width="200px" srcset="">
+        </div>
+        <div class="content">
+            <div class="animate">世界地图2</div>
+            <div class="basicDiv leftT"></div>
+            <div class="basicDiv rightT"></div>
+            <div class="basicDiv leftB"></div>
+            <div class="basicDiv rightB"></div>
+            <img src="./../img/earth2.jpg" alt="" width="200px" srcset="">
+        </div>
+        <div class="content">
+            <div class="animate">世界地图3</div>
+            <div class="basicDiv leftT"></div>
+            <div class="basicDiv rightT"></div>
+            <div class="basicDiv leftB"></div>
+            <div class="basicDiv rightB"></div>
+            <img src="./../img/earth3.png" alt="" width="200px" srcset="">
+        </div>
+    </div>
+</body>
+</html>

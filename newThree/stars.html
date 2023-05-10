@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        html,body{
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+    <script>
+        function mockSourceData(max){
+            if(max === 0) {
+                return []
+            }
+            let arr = [{
+                id:1,
+                name:'部门1',
+                children:[]
+            }]
+            if(max === 1) {
+                return arr
+            }
+            let newArr = []
+            arr[0].children = newArr
+            let parentId = 1
+            appendChild(parentId,{max,arr:newArr})
+            return arr
+        }
+        function appendChild(pid,data){
+            if(data.max === 1) return
+            let randomNum = Math.ceil(Math.random() * 10)
+            for(let i = 0 ; i<randomNum ; i++ ){
+                let arr = []
+                let n = randomID()
+                let obj = {
+                    id: n,
+                    pid,
+                    name:'部门'+randomID(),
+                    children:arr
+                }
+                appendChild(n,{max:data.max - 1,arr})
+                data.arr.push(obj)
+            }
+        }
+        function randomID() {
+            return Math.floor(Math.random() * 900000) + 100000
+        }
+    </script>
+</head>
+<body>
+    <script type="module">
+        import * as THREE from './js/three.module.js'
+        import {OrbitControls} from './js/OrbitControls.js'
+        import Stats from './js/stats.module.js'
+        let scene,camera,renderer,starArr = [],stats,controls
+        scene = new THREE.Scene()
+        camera = new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight)
+        camera.position.set(0,0,996)
+        renderer = new THREE.WebGLRenderer()
+        renderer.setSize(window.innerWidth,window.innerHeight-4)
+        document.body.appendChild(renderer.domElement)
+        controls = new OrbitControls(camera,renderer.domElement)
+        stats = new Stats()
+        document.body.appendChild(stats.domElement)
+        function randomColor() {
+            let color = Math.floor(0xffffff * Math.random()).toString(16)
+            while(color.length < 6) {
+                color = '0' + color
+            }
+            return '#' + color
+        }
+        for(let i = 0 ; i < 1000 ; i++) {
+            let mesh = new THREE.Mesh(
+                new THREE.SphereBufferGeometry(1,32,16),
+                new THREE.MeshBasicMaterial({color:randomColor()})
+            )
+            mesh.position.set(
+                Math.random() * 2000 - 1000,
+                Math.random() * 1200 - 600,
+                Math.random() * 2000 - 1000,
+            )
+            scene.add(mesh)
+            starArr.push(mesh)
+        }
+        function animate() {
+            stats.update()
+            controls.update()
+            starArr.forEach(s => {
+                if(s.position.z > 1000) {
+                    s.position.z = -1000
+                }
+                s.position.z += 20
+            })
+            renderer.render(scene,camera)
+            requestAnimationFrame(animate)
+        }
+        animate()
+    </script>
+</body>
+</html>
